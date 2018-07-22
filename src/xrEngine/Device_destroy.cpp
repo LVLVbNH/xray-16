@@ -2,7 +2,7 @@
 #include "Include/xrRender/DrawUtils.h"
 #include "Render.h"
 #include "IGame_Persistent.h"
-#include "xr_IOConsole.h"
+#include "XR_IOConsole.h"
 #include "xr_input.h"
 
 void CRenderDevice::Destroy()
@@ -60,9 +60,9 @@ void CRenderDevice::Reset(bool precache)
     // TODO: Remove this! It may hide crash
     Memory.mem_compact();
 
-    seqDeviceReset.Process(rp_DeviceReset);
+    seqDeviceReset.Process();
     if (dwWidth_before != dwWidth || dwHeight_before != dwHeight)
-        seqResolutionChanged.Process(rp_ScreenResolutionChanged);
+        seqResolutionChanged.Process();
 
     if (!GEnv.isDedicatedServer)
         pInput->ClipCursor(true);

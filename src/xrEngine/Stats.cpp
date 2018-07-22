@@ -17,9 +17,6 @@
 int g_ErrorLineCount = 15;
 Flags32 g_stats_flags = {0};
 
-// stats
-DECLARE_RP(Stats);
-
 class optimizer
 {
     float average_;
@@ -166,6 +163,7 @@ void CStats::Show()
     {
         font.SetColor(color_rgba(255, 16, 16, 191));
         font.OutSet(400, 0);
+
         for (u32 it = (u32)_max(int(0), (int)errors.size() - g_ErrorLineCount); it < errors.size(); it++)
             font.OutNext("%s", errors[it].c_str());
     }
