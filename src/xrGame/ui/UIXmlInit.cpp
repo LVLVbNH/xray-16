@@ -124,6 +124,8 @@ bool CUIXmlInit::InitOptionsItem(CUIXml& xml_doc, LPCSTR path, int index, CUIOpt
                 d = CUIOptionsItem::sdVidRestart;
             else if (0 == xr_stricmp(depends, "snd"))
                 d = CUIOptionsItem::sdSndRestart;
+            else if (0 == xr_stricmp(depends, "ui"))
+                d = CUIOptionsItem::sdUIRestart;
             else if (0 == xr_stricmp(depends, "restart"))
                 d = CUIOptionsItem::sdSystemRestart;
             else if (0 == xr_stricmp(depends, "runtime"))
@@ -345,7 +347,6 @@ bool CUIXmlInit::InitText(CUIXml& xml_doc, LPCSTR path, int index, CUILines* pLi
     return true;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////
-extern int keyname_to_dik(LPCSTR);
 
 bool CUIXmlInit::Init3tButton(CUIXml& xml_doc, LPCSTR path, int index, CUI3tButton* pWnd)
 {

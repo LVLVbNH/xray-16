@@ -376,17 +376,20 @@ public:
 class CCC_DemoRecord : public IConsole_Command
 {
 public:
-    CCC_DemoRecord(LPCSTR N) : IConsole_Command(N){};
+    CCC_DemoRecord(LPCSTR N) : IConsole_Command(N) {}
     virtual void Execute(LPCSTR args)
     {
-#ifndef DEBUG
-// if (GameID() != eGameIDSingle)
-//{
-//	Msg("For this game type Demo Record is disabled.");
-//	return;
-//};
-#endif
+        if (!g_pGameLevel) // level not loaded
+        {
+            Log("Demo Record is disabled when level is not loaded.");
+            return;
+        }
+
         Console->Hide();
+
+        // close main menu if it is open
+        if (MainMenu()->IsActive())
+            MainMenu()->Activate(false);
 
         LPSTR fn_;
         STRCONCAT(fn_, args, ".xrdemo");
@@ -1315,6 +1318,16 @@ public:
     }
 };
 
+class CCC_UIRestart : public IConsole_Command
+{
+public:
+    CCC_UIRestart(pcstr name) : IConsole_Command(name) { bEmptyArgsHandled = true; }
+
+    void Execute(pcstr /*args*/) override
+    {
+    }
+};
+
 struct CCC_StartTimeSingle : public IConsole_Command
 {
     CCC_StartTimeSingle(LPCSTR N) : IConsole_Command(N){};
@@ -2098,6 +2111,7 @@ void CCC_RegisterCommands()
     CMD4(CCC_Float, "con_sensitive", &g_console_sensitive, 0.01f, 1.0f);
     CMD4(CCC_Integer, "wpn_aim_toggle", &b_toggle_weapon_aim, 0, 1);
 
+    CMD1(CCC_UIRestart, "ui_restart");
     CMD3(CCC_Token, "ui_style", &UIStyleID, UIStyleToken.data());
 
 #ifdef DEBUG
