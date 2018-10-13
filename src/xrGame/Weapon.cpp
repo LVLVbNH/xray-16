@@ -1,12 +1,12 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "Weapon.h"
 #include "ParticlesObject.h"
 #include "entity_alive.h"
 #include "inventory_item_impl.h"
-#include "inventory.h"
-#include "xrserver_objects_alife_items.h"
-#include "actor.h"
-#include "actoreffector.h"
+#include "Inventory.h"
+#include "xrServer_Objects_ALife_Items.h"
+#include "Actor.h"
+#include "ActorEffector.h"
 #include "Level.h"
 #include "xr_level_controller.h"
 #include "game_cl_base.h"
@@ -15,13 +15,13 @@
 #include "xrPhysics/MathUtils.h"
 #include "Common/object_broker.h"
 #include "player_hud.h"
-#include "gamepersistent.h"
-#include "effectorFall.h"
+#include "GamePersistent.h"
+#include "EffectorFall.h"
 #include "debug_renderer.h"
 #include "static_cast_checked.hpp"
 #include "clsid_game.h"
-#include "weaponBinocularsVision.h"
-#include "ui/UIWindow.h"
+#include "WeaponBinocularsVision.h"
+#include "xrUICore/Windows/UIWindow.h"
 #include "ui/UIXmlInit.h"
 #include "Torch.h"
 #include "xrNetServer/NET_Messages.h"
@@ -417,7 +417,7 @@ void CWeapon::Load(LPCSTR section)
             if (!pWpnScopeXml)
             {
                 pWpnScopeXml = new CUIXml();
-                pWpnScopeXml->Load(CONFIG_PATH, UI_PATH, "scopes.xml");
+                pWpnScopeXml->Load(CONFIG_PATH, UI_PATH, UI_PATH_DEFAULT, "scopes.xml");
             }
             CUIXmlInit::InitWindow(*pWpnScopeXml, scope_tex_name.c_str(), 0, m_UIScope);
         }

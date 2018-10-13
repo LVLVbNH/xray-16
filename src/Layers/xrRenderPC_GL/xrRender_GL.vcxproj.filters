@@ -336,9 +336,6 @@
     <ClCompile Include="..\xrRender\DetailManager_Decompress.cpp">
       <Filter>Details</Filter>
     </ClCompile>
-    <ClCompile Include="..\xrRender\DetailManager_soft.cpp">
-      <Filter>Details</Filter>
-    </ClCompile>
     <ClCompile Include="..\xrRender\DetailModel.cpp">
       <Filter>Details</Filter>
     </ClCompile>
@@ -674,6 +671,9 @@
     </ClCompile>
     <ClCompile Include="gl_rendertarget_phase_flip.cpp">
       <Filter>Core_Target</Filter>
+    </ClCompile>
+    <ClCompile Include="rgl_shaders.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

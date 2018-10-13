@@ -7,7 +7,7 @@
 ////////////////////////////////////////////////////////////////////////////
 
 #include "pch_script.h"
-#include "gameobject.h"
+#include "GameObject.h"
 #include "patrol_path_manager.h"
 #include "script_game_object.h"
 #include "restricted_object.h"
@@ -15,7 +15,7 @@
 #include "xrScriptEngine/script_engine.hpp"
 #include "xrAICore/Navigation/ai_object_location.h"
 #include "script_entity_space.h"
-#include "script_callback_ex.h"
+#include "xrScriptEngine/script_callback_ex.h"
 #include "game_object_space.h"
 #include "xrAICore/Navigation/level_graph.h"
 

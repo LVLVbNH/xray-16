@@ -16,7 +16,7 @@
 #include "xrEngine/IGame_Persistent.h"
 #include "game_cl_base.h"
 #include "UIGameCustom.h"
-#include "UI/UIDialogWnd.h"
+#include "ui/UIDialogWnd.h"
 #include "date_time.h"
 #include "ai_space.h"
 #include "xrAICore/Navigation/level_graph.h"
@@ -31,7 +31,7 @@
 #include "physics_world_scripted.h"
 #include "alife_simulator.h"
 #include "alife_time_manager.h"
-#include "UI/UIGameTutorial.h"
+#include "ui/UIGameTutorial.h"
 #include "string_table.h"
 #include "ui/UIInventoryUtilities.h"
 #include "alife_object_registry.h"
@@ -304,19 +304,11 @@ void remove_call(const luabind::functor<bool>& condition, const luabind::functor
 
 void add_call(const luabind::object& lua_object, LPCSTR condition, LPCSTR action)
 {
-    //	try{
-    //		CPHScriptObjectCondition	*c=new CPHScriptObjectCondition(lua_object,condition);
-    //		CPHScriptObjectAction		*a=new CPHScriptObjectAction(lua_object,action);
     luabind::functor<bool> _condition = object_cast<luabind::functor<bool>>(lua_object[condition]);
     luabind::functor<void> _action = object_cast<luabind::functor<void>>(lua_object[action]);
     CPHScriptObjectConditionN* c = new CPHScriptObjectConditionN(lua_object, _condition);
     CPHScriptObjectActionN* a = new CPHScriptObjectActionN(lua_object, _action);
     Level().ph_commander_scripts().add_call_unique(c, c, a, a);
-    //	}
-    //	catch(...)
-    //	{
-    //		Msg("add_call excepted!!");
-    //	}
 }
 
 void remove_call(const luabind::object& lua_object, LPCSTR condition, LPCSTR action)
@@ -406,7 +398,7 @@ void iterate_sounds2(LPCSTR prefix, u32 max_count, luabind::object object, luabi
     iterate_sounds(prefix, max_count, temp);
 }
 
-#include "actoreffector.h"
+#include "ActorEffector.h"
 float add_cam_effector(LPCSTR fn, int id, bool cyclic, LPCSTR cb_func)
 {
     CAnimatorCamEffectorScriptCB* e = new CAnimatorCamEffectorScriptCB(cb_func);
@@ -451,7 +443,7 @@ int get_actor_points(LPCSTR sect) { return Actor()->StatisticMgr().GetSectionPoi
 #include "ActorEffector.h"
 void add_complex_effector(LPCSTR section, int id) { AddEffector(Actor(), id, section); }
 void remove_complex_effector(int id) { RemoveEffector(Actor(), id); }
-#include "postprocessanimator.h"
+#include "PostprocessAnimator.h"
 void add_pp_effector(LPCSTR fn, int id, bool cyclic)
 {
     CPostprocessAnimator* pp = new CPostprocessAnimator(id, cyclic);
@@ -573,7 +565,7 @@ void stop_tutorial()
         g_tutorial->Stop();
 }
 
-LPCSTR translate_string(LPCSTR str) { return *CStringTable().translate(str); }
+LPCSTR translate_string(LPCSTR str) { return *StringTable().translate(str); }
 bool has_active_tutotial() { return (g_tutorial != NULL); }
 
 //Alundaio: namespace level exports extension
@@ -780,7 +772,8 @@ IC static void CLevel_Export(lua_State* luaState)
         ]
     ];
 
-    module(luaState)[def("command_line", &command_line), def("IsGameTypeSingle", &IsGameTypeSingle),
+    module(luaState)[def("command_line", &command_line),
+        def("IsGameTypeSingle", (bool (*)())&IsGameTypeSingle),
         def("IsDynamicMusic", &IsDynamicMusic), def("render_get_dx_level", &render_get_dx_level),
         def("IsImportantSave", &IsImportantSave)];
 
@@ -829,6 +822,7 @@ IC static void CLevel_Export(lua_State* luaState)
         def("has_active_tutorial", &has_active_tutotial), def("translate_string", &translate_string)
 
     ];
+
 };
 
 SCRIPT_EXPORT_FUNC(CLevel, (), CLevel_Export);

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "Actor.h"
 #include "Torch.h"
 #include "trade.h"
@@ -8,20 +8,20 @@
 #include "PHDebug.h"
 #endif
 
-#include "hit.h"
+#include "Hit.h"
 #include "PHDestroyable.h"
 #include "Car.h"
 #include "UIGameSP.h"
-#include "inventory.h"
+#include "Inventory.h"
 #include "Level.h"
 #include "game_cl_base.h"
 #include "xr_level_controller.h"
-#include "actorcondition.h"
+#include "ActorCondition.h"
 #include "actor_input_handler.h"
 #include "string_table.h"
-#include "UI/UIStatic.h"
-#include "UI/UIActorMenu.h"
-#include "UI/UIDragDropReferenceList.h"
+#include "xrUICore/Static/UIStatic.h"
+#include "ui/UIActorMenu.h"
+#include "ui/UIDragDropReferenceList.h"
 #include "CharacterPhysicsSupport.h"
 #include "InventoryBox.h"
 #include "player_hud.h"
@@ -29,7 +29,7 @@
 #include "flare.h"
 #include "CustomDetector.h"
 #include "clsid_game.h"
-#include "hudmanager.h"
+#include "HUDManager.h"
 #include "Weapon.h"
 
 extern u32 hud_adj_mode;
@@ -188,7 +188,7 @@ void CActor::IR_OnKeyboardPress(int cmd)
 
                 StaticDrawableWrapper* _s = CurrentGameUI()->AddCustomStatic("item_used", true);
                 string1024 str;
-                strconcat(sizeof(str), str, *CStringTable().translate("st_item_used"), ": ", itm->NameItem());
+                strconcat(sizeof(str), str, *StringTable().translate("st_item_used"), ": ", itm->NameItem());
                 _s->wnd()->TextItemControl()->SetText(str);
 
                 CurrentGameUI()->GetActorMenu().m_pQuickSlot->ReloadReferences(this);

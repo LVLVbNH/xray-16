@@ -1,15 +1,16 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "MainMenu.h"
-#include "UI/UIDialogWnd.h"
+#include "ui/UIDialogWnd.h"
 #include "ui/UIMessageBoxEx.h"
-#include "xrEngine/xr_IOConsole.h"
+#include "xrEngine/XR_IOConsole.h"
 #include "xrEngine/IGame_Level.h"
 #include "xrEngine/CameraManager.h"
-#include "xr_Level_controller.h"
-#include "ui\UITextureMaster.h"
-#include "ui\UIXmlInit.h"
-#include "ui\UIBtnHint.h"
-#include "UICursor.h"
+#include "xr_level_controller.h"
+#include "xrUICore/XML/UITextureMaster.h"
+#include "ui/UIXmlInit.h"
+#include "SDL.h"
+#include "xrUICore/Buttons/UIBtnHint.h"
+#include "xrUICore/Cursor/UICursor.h"
 #include "xrGameSpy/GameSpy_Full.h"
 #include "xrGameSpy/GameSpy_HTTP.h"
 #include "xrGameSpy/GameSpy_Available.h"
@@ -25,8 +26,12 @@
 
 #include "ui/UICDkey.h"
 
+#ifdef WINDOWS
 #include <shellapi.h>
 #pragma comment(lib, "shell32.lib")
+#endif
+
+#include <tbb/parallel_for_each.h>
 
 #include "Common/object_broker.h"
 
@@ -75,12 +80,14 @@ CMainMenu::CMainMenu()
     m_deactivated_frame = 0;
 
     m_sPatchURL = "";
+#ifdef WINDOWS
     m_pGameSpyFull = NULL;
     m_account_mngr = NULL;
     m_login_mngr = NULL;
     m_profile_store = NULL;
     m_stats_submitter = NULL;
     m_atlas_submit_queue = NULL;
+#endif
 
     m_sPDProgress.IsInProgress = false;
     m_downloaded_mp_map_url._set("");
@@ -98,6 +105,7 @@ CMainMenu::CMainMenu()
     {
         g_btnHint = new CUIButtonHint();
         g_statHint = new CUIButtonHint();
+#ifdef WINDOWS
         m_pGameSpyFull = new CGameSpy_Full();
 
         for (u32 i = 0; i < u32(ErrMax); i++)
@@ -122,6 +130,7 @@ CMainMenu::CMainMenu()
         m_profile_store = new gamespy_profile::profile_store(m_pGameSpyFull);
         m_stats_submitter = new gamespy_profile::stats_submitter(m_pGameSpyFull);
         m_atlas_submit_queue = new atlas_submit_queue(m_stats_submitter);
+#endif
     }
 
     Device.seqFrame.Add(this, REG_PRIORITY_LOW - 1000);
@@ -135,6 +144,7 @@ CMainMenu::~CMainMenu()
     xr_delete(m_startDialog);
     g_pGamePersistent->m_pMainMenu = NULL;
 
+#ifdef WINDOWS
     xr_delete(m_account_mngr);
     xr_delete(m_login_mngr);
     xr_delete(m_profile_store);
@@ -142,6 +152,7 @@ CMainMenu::~CMainMenu()
     xr_delete(m_atlas_submit_queue);
 
     xr_delete(m_pGameSpyFull);
+#endif
 
     xr_delete(m_demo_info_loader);
     delete_data(m_pMB_ErrDlgs);
@@ -150,16 +161,43 @@ CMainMenu::~CMainMenu()
 void CMainMenu::ReadTextureInfo()
 {
     string_path buf;
-    FS_FileSet fset;
-    FS.file_list(fset, "$game_config$", FS_ListFiles, strconcat(sizeof(buf), buf, UI_PATH, "\\", "textures_descr\\*.xml"));
-    for (const auto& file : fset)
-    {
-        string_path fn1, fn2, fn3;
-        _splitpath(file.name.c_str(), fn1, fn2, fn3, 0);
-        xr_strcat(fn3, ".xml");
+    FS_FileSet files;
 
-        CUITextureMaster::ParseShTexInfo(fn3);
-    }
+    const auto UpdateFileSet = [&](pcstr path)
+    {
+        FS.file_list(files, "$game_config$", FS_ListFiles,
+            strconcat(sizeof(buf), buf, path, DELIMITER, "textures_descr" DELIMITER "*.xml")
+        );
+    };
+
+    const auto ParseFileSet = [&]()
+    {
+        /*
+         * Original CoP textures_descr
+         * loading time:
+         * Single-threaded ~80 ms
+         * Multi-threaded  ~40 ms
+         * Just a bit of speedup
+        */
+        tbb::parallel_for_each(files, [](const FS_File& file)
+        {
+            string_path path, name;
+            _splitpath(file.name.c_str(), nullptr, path, name, nullptr);
+            xr_strcat(name, ".xml");
+            path[xr_strlen(path) - 1] = '\0'; // cut the latest '\\'
+
+            CUITextureMaster::ParseShTexInfo(path, name);
+        });
+    };
+
+    UpdateFileSet(UI_PATH_DEFAULT);
+    ParseFileSet();
+
+    if (0 == xr_strcmp(UI_PATH, UI_PATH_DEFAULT))
+        return;
+
+    UpdateFileSet(UI_PATH);
+    ParseFileSet();
 }
 
 void CMainMenu::Activate(bool bActivate)
@@ -350,7 +388,9 @@ void CMainMenu::IR_OnKeyboardPress(int dik)
     {
         IWantMyMouseBackScreamed = true;
         pInput->GrabInput(false);
+#if SDL_VERSION_ATLEAST(2,0,5)
         SDL_SetWindowOpacity(Device.m_sdlWnd, 0.9f);
+#endif
     }
 
     if (SDL_SCANCODE_F12 == dik)
@@ -371,7 +411,9 @@ void CMainMenu::IR_OnKeyboardRelease(int dik)
     {
         IWantMyMouseBackScreamed = false;
         pInput->GrabInput(true);
+#if SDL_VERSION_ATLEAST(2,0,5)
         SDL_SetWindowOpacity(Device.m_sdlWnd, 1.f);
+#endif
     }
 
 
@@ -485,6 +527,7 @@ void CMainMenu::OnFrame()
             Console->Show();
     }
 
+#ifdef WINDOWS
     if (IsActive() || m_sPDProgress.IsInProgress)
     {
         GSUpdateStatus status = m_pGameSpyFull->Update();
@@ -498,6 +541,7 @@ void CMainMenu::OnFrame()
         }
         m_atlas_submit_queue->update();
     }
+#endif
 
     if (IsActive())
     {
@@ -593,6 +637,7 @@ void CMainMenu::OnPatchCheck(bool success, LPCSTR VersionName, LPCSTR URL)
 
 void CMainMenu::OnDownloadPatch(CUIWindow*, void*)
 {
+#ifdef WINDOWS
     CGameSpy_Available GSA;
     shared_str result_string;
     if (!GSA.CheckAvailableServices(result_string))
@@ -608,7 +653,6 @@ void CMainMenu::OnDownloadPatch(CUIWindow*, void*)
     string4096 FilePath = "";
     char* FileName = NULL;
     GetFullPathName(fileName, 4096, FilePath, &FileName);
-
     string_path fname;
     if (FS.path_exist("$downloads$"))
     {
@@ -616,7 +660,7 @@ void CMainMenu::OnDownloadPatch(CUIWindow*, void*)
         m_sPatchFileName = fname;
     }
     else
-        m_sPatchFileName.printf("downloads\\%s", FileName);
+        m_sPatchFileName.printf("downloads" DELIMITER "%s", FileName);
 
     m_sPDProgress.IsInProgress = true;
     m_sPDProgress.Progress = 0;
@@ -628,6 +672,7 @@ void CMainMenu::OnDownloadPatch(CUIWindow*, void*)
     progressCallback.bind(this, &CMainMenu::OnDownloadPatchProgress);
     m_pGameSpyFull->GetGameSpyHTTP()->DownloadFile(
         *m_sPatchURL, *m_sPatchFileName, completionCallback, progressCallback);
+#endif
 }
 
 void CMainMenu::OnDownloadPatchResult(bool success)
@@ -643,8 +688,7 @@ void CMainMenu::OnSessionTerminate(LPCSTR reason)
         return;
 
     m_start_time = Device.dwTimeGlobal;
-    CStringTable st;
-    LPCSTR str = st.translate("ui_st_kicked_by_server").c_str();
+    LPCSTR str = StringTable().translate("ui_st_kicked_by_server").c_str();
     LPSTR text;
 
     if (reason && xr_strlen(reason) && reason[0] == '@')
@@ -656,13 +700,13 @@ void CMainMenu::OnSessionTerminate(LPCSTR reason)
         STRCONCAT(text, str, " ", reason);
     }
 
-    m_pMB_ErrDlgs[SessionTerminate]->SetText(st.translate(text).c_str());
+    m_pMB_ErrDlgs[SessionTerminate]->SetText(StringTable().translate(text).c_str());
     SetErrorDialog(CMainMenu::SessionTerminate);
 }
 
 void CMainMenu::OnLoadError(LPCSTR module)
 {
-    LPCSTR str = CStringTable().translate("ui_st_error_loading").c_str();
+    LPCSTR str = StringTable().translate("ui_st_error_loading").c_str();
     string1024 Text;
     strconcat(sizeof(Text), Text, str, " ");
     xr_strcat(Text, sizeof(Text), module);
@@ -688,8 +732,10 @@ void CMainMenu::OnRunDownloadedPatch(CUIWindow*, void*)
 
 void CMainMenu::CancelDownload()
 {
+#ifdef WINDOWS
     m_pGameSpyFull->GetGameSpyHTTP()->StopDownload();
     m_sPDProgress.IsInProgress = false;
+#endif
 }
 
 void CMainMenu::SetNeedVidRestart() { m_Flags.set(flNeedVidRestart, TRUE); }
@@ -745,6 +791,7 @@ LPCSTR DelHyphens(LPCSTR c)
 
 bool CMainMenu::IsCDKeyIsValid()
 {
+#ifdef WINDOWS
     if (!m_pGameSpyFull || !m_pGameSpyFull->GetGameSpyHTTP())
         return false;
     string64 CDKey = "";
@@ -759,10 +806,13 @@ bool CMainMenu::IsCDKeyIsValid()
     for (int i = 0; i < 4; i++)
     {
         GetGameID(&GameID, i);
-        if (VerifyClientCheck(CDKey, unsigned short(GameID)) == 1)
+        if (VerifyClientCheck(CDKey, (unsigned short)(GameID)) == 1)
             return true;
     };
     return false;
+#else
+    return true;
+#endif
 }
 
 bool CMainMenu::ValidateCDKey()
@@ -795,12 +845,15 @@ void CMainMenu::OnConnectToMasterServerOkClicked(CUIWindow*, void*) { Hide_CTMS_
 LPCSTR CMainMenu::GetGSVer()
 {
     static string256 buff;
+#ifdef WINDOWS
     xr_strcpy(buff, GetGameVersion());
+#endif
     return buff;
 }
 
 LPCSTR CMainMenu::GetPlayerName()
 {
+#ifdef WINDOWS
     gamespy_gp::login_manager* l_mngr = GetLoginMngr();
     gamespy_gp::profile const* tmp_prof = l_mngr ? l_mngr->get_current_profile() : NULL;
 
@@ -809,6 +862,7 @@ LPCSTR CMainMenu::GetPlayerName()
         m_player_name = tmp_prof->unique_nick();
     }
     else
+#endif
     {
         string512 name;
         GetPlayerName_FromRegistry(name, sizeof(name));
@@ -846,9 +900,14 @@ void CMainMenu::OnDownloadMPMap_CopyURL(CUIWindow* w, void* d)
 void CMainMenu::OnDownloadMPMap(CUIWindow* w, void* d)
 {
     LPCSTR url = m_downloaded_mp_map_url.c_str();
+#ifdef WINDOWS
     LPCSTR params = NULL;
     STRCONCAT(params, "/C start ", url);
     ShellExecute(0, "open", "cmd.exe", params, NULL, SW_SHOW);
+#else
+    std::string command = "xdg-open " + std::string{url};
+    system(command.c_str());
+#endif
 }
 
 demo_info const* CMainMenu::GetDemoInfo(LPCSTR file_name)

@@ -6,7 +6,7 @@
 #define ResourceManagerH
 #pragma once
 
-#include "shader.h"
+#include "Shader.h"
 #include "tss_def.h"
 #include "TextureDescrManager.h"
 #include "xrScriptEngine/script_engine.hpp"
@@ -258,7 +258,7 @@ private:
     T* CreateShader(const char* name, const char* filename = nullptr, const bool searchForEntryAndTarget = false);
 
     template <typename T>
-    void DestroyShader(const T* sh);
+    bool DestroyShader(const T* sh);
 };
 
 #endif // ResourceManagerH

@@ -1,12 +1,12 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "game_sv_mp.h"
 #include "xrServer.h"
 #include "xrMessages.h"
 #include "xrServer_Object_Base.h"
 #include "xrServer_Objects.h"
 #include "Level.h"
-#include "xrserver_objects_alife_monsters.h"
-#include "actor.h"
+#include "xrServer_Objects_ALife_Monsters.h"
+#include "Actor.h"
 #include "xrEngine/XR_IOConsole.h"
 #include "xrEngine/IGame_Persistent.h"
 #include "date_time.h"
@@ -219,12 +219,17 @@ struct real_sender
     NET_Packet* P;
     u32 flags_to_send;
 
+#ifdef LINUX // FIXME!!!
+    real_sender(xrServer* server, NET_Packet* Packet, u32 flags = 0)
+#else
     real_sender(xrServer* server, NET_Packet* Packet, u32 flags = DPNSEND_GUARANTEED)
+#endif
     {
         server_for_send = server;
         P = Packet;
         flags_to_send = flags;
     }
+
     void operator()(IClient* client)
     {
         xrClientData* tmp_client = static_cast<xrClientData*>(client);
@@ -1070,7 +1075,7 @@ void game_sv_mp::OnVoteStart(LPCSTR VoteCommand, ClientID sender)
         {
             string256 LevelName;
             string256 LevelVersion;
-            sscanf_s(CommandParams, "%255s %255s", LevelName, sizeof(LevelName), LevelVersion, sizeof(LevelVersion));
+            sscanf(CommandParams, "%255s %255s", LevelName, LevelVersion);
 #ifdef DEBUG
             Msg("--- Starting vote for changing level to: %s[%s]", LevelName, LevelVersion);
 #endif // #ifdef DEBUG
@@ -1913,9 +1918,9 @@ void game_sv_mp::DumpOnlineStatistic()
     xrGameSpyServer* srv = smart_cast<xrGameSpyServer*>(m_server);
 
     string_path fn;
-    FS.update_path(fn, "$logs$", "mp_stats\\");
+    FS.update_path(fn, "$logs$", "mp_stats" DELIMITER);
     xr_strcat(fn, srv->HostName.c_str());
-    xr_strcat(fn, "\\online_dump.ltx");
+    xr_strcat(fn, "" DELIMITER "online_dump.ltx");
 
     string64 t_stamp;
     timestamp(t_stamp);
@@ -1928,10 +1933,10 @@ void game_sv_mp::DumpOnlineStatistic()
 
     ini.w_u32(current_section.c_str(), "players_total_cnt", m_server->GetClientsCount());
 
-    xr_sprintf(str_buff, "\"%s\"", CStringTable().translate(Level().name().c_str()).c_str());
+    xr_sprintf(str_buff, "\"%s\"", StringTable().translate(Level().name().c_str()).c_str());
     ini.w_string(current_section.c_str(), "current_map_name", str_buff);
 
-    xr_sprintf(str_buff, "%s", CStringTable().translate(type_name()).c_str());
+    xr_sprintf(str_buff, "%s", StringTable().translate(type_name()).c_str());
     ini.w_string(current_section.c_str(), "game_mode", str_buff);
 
     auto it = m_pMapRotation_List.begin();
@@ -1940,7 +1945,7 @@ void game_sv_mp::DumpOnlineStatistic()
     {
         string16 num_buf;
         xr_sprintf(num_buf, "%d", idx);
-        xr_sprintf(str_buff, "\"%s\"", CStringTable().translate((*it).map_name.c_str()).c_str());
+        xr_sprintf(str_buff, "\"%s\"", StringTable().translate((*it).map_name.c_str()).c_str());
         ini.w_string("map_rotation", num_buf, str_buff);
     }
 
@@ -2094,11 +2099,11 @@ void game_sv_mp::StartToDumpStatistics()
     }
 
     xrGameSpyServer* srv = smart_cast<xrGameSpyServer*>(m_server);
-    FS.update_path(round_statistics_dump_fn, "$logs$", "mp_stats\\");
+    FS.update_path(round_statistics_dump_fn, "$logs$", "mp_stats" DELIMITER);
     string64 t_stamp;
     timestamp(t_stamp);
     xr_strcat(round_statistics_dump_fn, srv->HostName.c_str());
-    xr_strcat(round_statistics_dump_fn, "\\games\\dmp");
+    xr_strcat(round_statistics_dump_fn, DELIMITER "games" DELIMITER "dmp");
     xr_strcat(round_statistics_dump_fn, t_stamp);
     xr_strcat(round_statistics_dump_fn, ".ltx");
 }
@@ -2130,10 +2135,10 @@ void game_sv_mp::DumpRoundStatistics()
     timestamp(str_current_time);
     ini.w_string(current_section.c_str(), "end_time", str_current_time);
 
-    xr_sprintf(str_buff, "%s", CStringTable().translate(type_name()).c_str());
+    xr_sprintf(str_buff, "%s", StringTable().translate(type_name()).c_str());
     ini.w_string(current_section.c_str(), "game_mode", str_buff);
 
-    xr_sprintf(str_buff, "\"%s\"", CStringTable().translate(Level().name().c_str()).c_str());
+    xr_sprintf(str_buff, "\"%s\"", StringTable().translate(Level().name().c_str()).c_str());
     ini.w_string(current_section.c_str(), "current_map_name", str_buff);
 
     xr_sprintf(str_buff, "\"%s\"", Level().name().c_str());

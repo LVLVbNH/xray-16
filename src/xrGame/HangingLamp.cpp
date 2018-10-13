@@ -4,11 +4,11 @@
 #include "xrEngine/xr_collide_form.h"
 #include "xrPhysics/PhysicsShell.h"
 #include "xrPhysics/MathUtils.h"
-#include "xrserver_objects_alife.h"
+#include "xrServer_Objects_ALife.h"
 #include "Include/xrRender/Kinematics.h"
 #include "Include/xrRender/KinematicsAnimated.h"
 #include "game_object_space.h"
-#include "script_callback_ex.h"
+#include "xrScriptEngine/script_callback_ex.h"
 #include "script_game_object.h"
 #include "xrScriptEngine/ScriptExporter.hpp"
 

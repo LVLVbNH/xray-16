@@ -6,7 +6,7 @@
 //	Description : ALife Simulator storage manager
 ////////////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "alife_storage_manager.h"
 #include "alife_simulator_header.h"
 #include "alife_time_manager.h"
@@ -15,7 +15,7 @@
 #include "alife_graph_registry.h"
 #include "alife_group_registry.h"
 #include "alife_registry_container.h"
-#include "xrserver.h"
+#include "xrServer.h"
 #include "Level.h"
 #include "xrEngine/x_ray.h"
 #include "saved_game_wrapper.h"
@@ -192,7 +192,7 @@ bool CALifeStorageManager::load(LPCSTR save_name_no_check)
         make_string("%s\nSaved game version mismatch or saved game is corrupted", file_name));
 
     string512 temp;
-    strconcat(sizeof(temp), temp, CStringTable().translate("st_loading_saved_game").c_str(),
+    strconcat(sizeof(temp), temp, StringTable().translate("st_loading_saved_game").c_str(),
         "\"", save_name,SAVE_EXTENSION, "\"");
 
     g_pGamePersistent->SetLoadStageTitle(temp);

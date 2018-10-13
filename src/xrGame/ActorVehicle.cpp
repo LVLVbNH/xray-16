@@ -1,7 +1,7 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 #pragma hdrstop
 
-#include "actor.h"
+#include "Actor.h"
 #include "xrEngine/CameraBase.h"
 
 #include "ActorEffector.h"
@@ -10,7 +10,7 @@
 #include "PHDebug.h"
 #endif
 #include "alife_space.h"
-#include "hit.h"
+#include "Hit.h"
 #include "PHDestroyable.h"
 #include "Car.h"
 #include "Include/xrRender/Kinematics.h"
@@ -18,11 +18,11 @@
 #include "actor_anim_defs.h"
 #include "game_object_space.h"
 #include "CharacterPhysicsSupport.h"
-#include "inventory.h"
+#include "Inventory.h"
 
 #include "pch_script.h"
 #include "game_object_space.h"
-#include "script_callback_ex.h"
+#include "xrScriptEngine/script_callback_ex.h"
 #include "script_game_object.h"
 
 void CActor::attach_Vehicle(CHolderCustom* vehicle)

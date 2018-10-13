@@ -1,13 +1,19 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "string_table.h"
-
-#include "ui/xrUIXmlParser.h"
+#include "xrUICore/XML/xrUIXmlParser.h"
 #include "xr_level_controller.h"
+
+CStringTable& StringTable() { return *((CStringTable*)gStringTable); }
 
 STRING_TABLE_DATA* CStringTable::pData = NULL;
 BOOL CStringTable::m_bWriteErrorsToLog = FALSE;
 
-CStringTable::CStringTable() { Init(); }
+CStringTable::CStringTable()
+{
+    pData = nullptr;
+}
+
+CStringTable::~CStringTable() { Destroy(); }
 void CStringTable::Destroy() { xr_delete(pData); }
 void CStringTable::rescan()
 {
@@ -30,7 +36,7 @@ void CStringTable::Init()
     //---
     FS_FileSet fset;
     string_path files_mask;
-    xr_sprintf(files_mask, "text\\%s\\*.xml", pData->m_sLanguage.c_str());
+    xr_sprintf(files_mask, "text" DELIMITER "%s" DELIMITER "*.xml", pData->m_sLanguage.c_str());
     FS.file_list(fset, "$game_config$", FS_ListFiles, files_mask);
     auto fit = fset.begin();
     auto fit_e = fset.end();
@@ -54,7 +60,7 @@ void CStringTable::Load(LPCSTR xml_file_full)
 {
     CUIXml uiXml;
     string_path _s;
-    strconcat(sizeof(_s), _s, "text\\", pData->m_sLanguage.c_str());
+    strconcat(sizeof(_s), _s, "text" DELIMITER, pData->m_sLanguage.c_str());
 
     uiXml.Load(CONFIG_PATH, _s, xml_file_full);
 
@@ -96,13 +102,11 @@ void CStringTable::ReparseKeyBindings()
 
 STRING_VALUE CStringTable::ParseLine(LPCSTR str, LPCSTR skey, bool bFirst)
 {
-    //	LPCSTR str = "1 $$action_left$$ 2 $$action_right$$ 3 $$action_left$$ 4";
     xr_string res;
     int k = 0;
     const char* b;
 #define ACTION_STR "$$ACTION_"
 
-//.	int LEN				= (int)xr_strlen(ACTION_STR);
 #define LEN 9
 
     string256 buff;

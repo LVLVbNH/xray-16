@@ -1,19 +1,19 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "map_spot.h"
 #include "map_location.h"
 
 #include "ui/UIXmlInit.h"
-#include "ui/UIMApWnd.h"
+#include "ui/UIMapWnd.h"
 #include "Level.h"
 #include "ui/UIInventoryUtilities.h"
 #include "xrEngine/xr_object.h"
 #include "Common/object_broker.h"
-#include "ui/UITextureMaster.h"
+#include "xrUICore/XML/UITextureMaster.h"
 #include "ui/UIHelper.h"
 
 #include "Include/xrRender/UIShader.h"
-#include "gametaskmanager.h"
-#include "gametask.h"
+#include "GametaskManager.h"
+#include "GameTask.h"
 
 CMapSpot::CMapSpot(CMapLocation* ml) : m_map_location(ml), m_mark_focused(false)
 {
@@ -135,7 +135,7 @@ void CMiniMapSpot::Load(CUIXml* xml, LPCSTR path)
     {
         LPCSTR texture = xml->Read(buf, 0, NULL);
         CUITextureMaster::InitTexture(texture, &m_UIStaticItem);
-        if (strchr(texture, '\\'))
+        if (strchr(texture, _DELIMITER))
         {
             float x = xml->ReadAttribFlt(buf, 0, "x", base_rect.x1);
             float y = xml->ReadAttribFlt(buf, 0, "y", base_rect.y1);
@@ -155,7 +155,7 @@ void CMiniMapSpot::Load(CUIXml* xml, LPCSTR path)
     {
         LPCSTR texture = xml->Read(buf, 0, NULL);
         CUITextureMaster::InitTexture(texture, &m_UIStaticItem);
-        if (strchr(texture, '\\'))
+        if (strchr(texture, _DELIMITER))
         {
             float x = xml->ReadAttribFlt(buf, 0, "x", base_rect.x1);
             float y = xml->ReadAttribFlt(buf, 0, "y", base_rect.y1);
@@ -174,7 +174,7 @@ void CMiniMapSpot::Load(CUIXml* xml, LPCSTR path)
     {
         LPCSTR texture = xml->Read(buf, 0, NULL);
         CUITextureMaster::InitTexture(texture, &m_UIStaticItem);
-        if (strchr(texture, '\\'))
+        if (strchr(texture, _DELIMITER))
         {
             float x = xml->ReadAttribFlt(buf, 0, "x", base_rect.x1);
             float y = xml->ReadAttribFlt(buf, 0, "y", base_rect.y1);

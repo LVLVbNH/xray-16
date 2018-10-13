@@ -829,7 +829,7 @@ void xrServer::Server_Client_Check(IClient* CL)
     {
         return;
     };
-
+#ifndef LINUX // FIXME!!!
     if (CL->process_id == GetCurrentProcessId())
     {
         CL->flags.bLocal = 1;
@@ -840,6 +840,7 @@ void xrServer::Server_Client_Check(IClient* CL)
     {
         CL->flags.bLocal = 0;
     }
+#endif
 };
 
 bool xrServer::OnCL_QueryHost()
@@ -985,8 +986,9 @@ void xrServer::create_direct_client()
     SClientConnectData cl_data;
     cl_data.clientID.set(1);
     xr_strcpy(cl_data.name, "single_player");
+#ifndef LINUX // FIXME!!!
     cl_data.process_id = GetCurrentProcessId();
-
+#endif
     new_client(&cl_data);
 }
 
@@ -1044,7 +1046,7 @@ void xrServer::PerformCheckClientsForMaxPing()
                 if (Client->m_ping_warn.m_maxPingWarnings >= g_sv_maxPingWarningsCount)
                 { // kick
                     LPSTR reason;
-                    STRCONCAT(reason, CStringTable().translate("st_kicked_by_server").c_str());
+                    STRCONCAT(reason, StringTable().translate("st_kicked_by_server").c_str());
                     Level().Server->DisconnectClient(Client, reason);
                 }
                 else

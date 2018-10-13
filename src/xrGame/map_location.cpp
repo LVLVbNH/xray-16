@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "map_location.h"
 #include "map_spot.h"
 #include "map_manager.h"
@@ -13,7 +13,7 @@
 #include "ui/UIMap.h"
 #include "alife_simulator.h"
 #include "xrAICore/Navigation/graph_engine.h"
-#include "actor.h"
+#include "Actor.h"
 #include "xrAICore/Navigation/ai_object_location.h"
 #include "alife_object_registry.h"
 #include "relation_registry.h"
@@ -24,8 +24,8 @@
 #include "actor_memory.h"
 #include "visual_memory_manager.h"
 #include "location_manager.h"
-#include "gametask.h"
-#include "gametaskmanager.h"
+#include "GameTask.h"
+#include "GametaskManager.h"
 #include "ActorHelmet.h"
 #include "Inventory.h"
 
@@ -89,7 +89,7 @@ void CMapLocation::LoadSpot(LPCSTR type, bool bReload)
     if (!g_uiSpotXml)
     {
         g_uiSpotXml = new CUIXml();
-        g_uiSpotXml->Load(CONFIG_PATH, UI_PATH, "map_spots.xml");
+        g_uiSpotXml->Load(CONFIG_PATH, UI_PATH, UI_PATH_DEFAULT, "map_spots.xml");
     }
 
     string512 path_base, path;
@@ -621,7 +621,7 @@ LPCSTR CMapLocation::GetHint()
     {
         return NULL;
     }
-    return CStringTable().translate(m_hint).c_str();
+    return StringTable().translate(m_hint).c_str();
 };
 
 CMapSpotPointer* CMapLocation::GetSpotPointer(CMapSpot* sp)

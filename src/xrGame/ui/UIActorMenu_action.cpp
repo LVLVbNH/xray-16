@@ -5,7 +5,7 @@
 //	Description : UI ActorMenu actions implementation
 ////////////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "UIActorMenu.h"
 #include "UIActorStateInfo.h"
 #include "Actor.h"
@@ -16,16 +16,16 @@
 #include "Common/object_broker.h"
 #include "UIInventoryUtilities.h"
 #include "game_cl_base.h"
-#include "UICursor.h"
+#include "xrUICore/Cursor/UICursor.h"
 #include "UICellItem.h"
 #include "UICharacterInfo.h"
 #include "UIItemInfo.h"
 #include "UIDragDropListEx.h"
 #include "UIInventoryUpgradeWnd.h"
-#include "UI3tButton.h"
-#include "UIBtnHint.h"
+#include "xrUICore/Buttons/UI3tButton.h"
+#include "xrUICore/Buttons/UIBtnHint.h"
 #include "UIMessageBoxEx.h"
-#include "UIPropertiesBox.h"
+#include "xrUICore/PropertiesBox/UIPropertiesBox.h"
 #include "UIMainIngameWnd.h"
 
 bool CUIActorMenu::AllowItemDrops(EDDListType from, EDDListType to)

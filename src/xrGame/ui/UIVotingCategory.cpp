@@ -1,7 +1,7 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "UIVotingCategory.h"
 #include "UIXmlInit.h"
-#include "UI3tButton.h"
+#include "xrUICore/Buttons/UI3tButton.h"
 #include "UIKickPlayer.h"
 #include "UIChangeMap.h"
 #include "ChangeWeatherDialog.hpp"
@@ -55,7 +55,7 @@ void CUIVotingCategory::InitVotingCategory()
     if (!xml_doc)
         xml_doc = new CUIXml();
 
-    xml_doc->Load(CONFIG_PATH, UI_PATH, "voting_category.xml");
+    xml_doc->Load(CONFIG_PATH, UI_PATH, UI_PATH_DEFAULT, "voting_category.xml");
 
     CUIXmlInit::InitWindow(*xml_doc, "category", 0, this);
 
@@ -109,7 +109,7 @@ bool CUIVotingCategory::OnKeyboardAction(int dik, EUIMessages keyboard_action)
     return false;
 }
 
-#include "xrEngine/xr_ioconsole.h"
+#include "xrEngine/XR_IOConsole.h"
 
 void CUIVotingCategory::OnBtn(int i)
 {

@@ -10,7 +10,7 @@
 #include "Common/object_broker.h"
 #include "UIInventoryUpgradeWnd.h"
 
-#include "xrUIXmlParser.h"
+#include "xrUICore/XML/xrUIXmlParser.h"
 #include "UIXmlInit.h"
 #include "string_table.h"
 #include "Actor.h"
@@ -24,10 +24,10 @@
 #include "UIInventoryUtilities.h"
 #include "UIActorMenu.h"
 #include "UIItemInfo.h"
-#include "UIFrameLineWnd.h"
-#include "UI3tButton.h"
+#include "xrUICore/Windows/UIFrameLineWnd.h"
+#include "xrUICore/Buttons/UI3tButton.h"
 #include "UIHelper.h"
-#include "ui_defs.h"
+#include "xrUICore/ui_defs.h"
 #include "Weapon.h"
 #include "WeaponRPG7.h"
 #include "CustomOutfit.h"
@@ -43,9 +43,9 @@ CUIInventoryUpgradeWnd::Scheme::~Scheme() { delete_data(cells); }
 CUIInventoryUpgradeWnd::CUIInventoryUpgradeWnd()
 {
     // m_WeaponIconsShader = new ui_shader();
-    //(*m_WeaponIconsShader)->create("hud\\default", "ui\\ui_actor_weapons");
+    //(*m_WeaponIconsShader)->create("hud" DELIMITER "default", "ui" DELIMITER "ui_actor_weapons");
     // m_OutfitIconsShader = new ui_shader();
-    //(*m_OutfitIconsShader)->create("hud\\default", "ui\\ui_actor_armor");
+    //(*m_OutfitIconsShader)->create("hud" DELIMITER "default", "ui" DELIMITER "ui_actor_armor");
     m_inv_item = NULL;
     m_cur_upgrade_id = NULL;
     m_current_scheme = NULL;
@@ -64,7 +64,7 @@ CUIInventoryUpgradeWnd::~CUIInventoryUpgradeWnd()
 void CUIInventoryUpgradeWnd::Init()
 {
     CUIXml uiXml;
-    uiXml.Load(CONFIG_PATH, UI_PATH, g_inventory_upgrade_xml);
+    uiXml.Load(CONFIG_PATH, UI_PATH, UI_PATH_DEFAULT, g_inventory_upgrade_xml);
 
     CUIXmlInit xml_init;
     xml_init.InitWindow(uiXml, "main", 0, this);

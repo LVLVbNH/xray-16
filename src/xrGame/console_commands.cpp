@@ -1,11 +1,11 @@
 #include "pch_script.h"
-#include "xrEngine/xr_ioconsole.h"
+#include "xrEngine/XR_IOConsole.h"
 #include "xrEngine/xr_ioc_cmd.h"
-#include "xrEngine/customhud.h"
-#include "xrEngine/fdemorecord.h"
-#include "xrEngine/fdemoplay.h"
+#include "xrEngine/CustomHUD.h"
+#include "xrEngine/FDemoRecord.h"
+#include "xrEngine/FDemoPlay.h"
 #include "xrMessages.h"
-#include "xrserver.h"
+#include "xrServer.h"
 #include "Level.h"
 #include "xrScriptEngine/script_debugger.hpp"
 #include "ai_debug.h"
@@ -13,26 +13,26 @@
 #include "game_cl_base.h"
 #include "game_cl_single.h"
 #include "game_sv_single.h"
-#include "hit.h"
+#include "Hit.h"
 #include "PHDestroyable.h"
-#include "actor.h"
+#include "Actor.h"
 #include "Actor_Flags.h"
-#include "customzone.h"
+#include "CustomZone.h"
 #include "xrScriptEngine/script_engine.hpp"
 #include "xrScriptEngine/script_process.hpp"
 #include "xrServer_Objects.h"
 #include "ui/UIMainIngameWnd.h"
-#include "xrPhysics/iphworld.h"
+#include "xrPhysics/IPHWorld.h"
 #include "string_table.h"
 #include "autosave_manager.h"
 #include "ai_space.h"
-#include "ai/monsters/BaseMonster/base_monster.h"
+#include "ai/monsters/basemonster/base_monster.h"
 #include "date_time.h"
 #include "mt_config.h"
 #include "ui/UIOptConCom.h"
 #include "UIGameSP.h"
 #include "ui/UIActorMenu.h"
-#include "ui/UIStatic.h"
+#include "xrUICore/Static/UIStatic.h"
 #include "zone_effector.h"
 #include "GameTask.h"
 #include "MainMenu.h"
@@ -40,7 +40,7 @@
 #include "xrAICore/Navigation/level_graph.h"
 #include "xrNetServer/NET_Messages.h"
 
-#include "cameralook.h"
+#include "CameraLook.h"
 #include "character_hit_animations_params.h"
 #include "inventory_upgrade_manager.h"
 
@@ -86,7 +86,7 @@ extern BOOL g_ShowAnimationInfo;
 extern BOOL g_bShowHitSectors;
 // extern	BOOL	g_bDebugDumpPhysicsStep	;
 extern ESingleGameDifficulty g_SingleGameDifficulty;
-extern BOOL g_show_wnd_rect2;
+XRUICORE_API extern BOOL g_show_wnd_rect2;
 //-----------------------------------------------------------
 extern float g_fTimeFactor;
 extern BOOL b_toggle_weapon_aim;
@@ -467,7 +467,7 @@ bool valid_saved_game_name(LPCSTR file_name)
     LPCSTR E = file_name + xr_strlen(file_name);
     for (; I != E; ++I)
     {
-        if (!strchr("/\\:*?\"<>|^()[]%", *I))
+        if (!strchr("/" DELIMITER ":*?\"<>|^()[]%", *I))
             continue;
 
         return (false);
@@ -516,10 +516,10 @@ public:
     virtual void Execute(LPCSTR args)
     {
 #if 0
-		if (!Level().autosave_manager().ready_for_autosave()) {
-			Msg		("! Cannot save the game right now!");
-			return;
-		}
+        if (!Level().autosave_manager().ready_for_autosave()) {
+            Msg		("! Cannot save the game right now!");
+            return;
+        }
 #endif
         if (!IsGameTypeSingle())
         {
@@ -570,7 +570,7 @@ public:
 #endif
         StaticDrawableWrapper* _s = CurrentGameUI()->AddCustomStatic("game_saved", true);
         LPSTR save_name;
-        STRCONCAT(save_name, CStringTable().translate("st_game_saved").c_str(), ": ", S);
+        STRCONCAT(save_name, StringTable().translate("st_game_saved").c_str(), ": ", S);
         _s->wnd()->TextItemControl()->SetText(save_name);
 
         xr_strcat(S, ".dds");
@@ -1670,11 +1670,12 @@ public:
             sscanf(arguments, "%d", &bInfo);
             InformOfNoPatch = (bInfo != 0);
         }
-
+#ifdef WINDOWS
         //		GameSpyPatching.CheckForPatch(InformOfNoPatch);
         CGameSpy_Patching::PatchCheckCallback cb;
         cb.bind(MainMenu(), &CMainMenu::OnPatchCheck);
         MainMenu()->GetGS()->GetGameSpyPatching()->CheckForPatch(InformOfNoPatch, cb);
+#endif
     }
 };
 
@@ -1723,6 +1724,22 @@ public:
             sscanf(arguments, "%s %f", name, &f);
             ai_dbg::set_var(name, f);
         }
+    }
+};
+
+// Change weather immediately
+class CCC_SetWeather : public IConsole_Command
+{
+public:
+    CCC_SetWeather(LPCSTR N) : IConsole_Command(N){};
+    virtual void Execute(LPCSTR args)
+    {
+        if (!xr_strlen(args))
+            return;
+        if (!g_pGamePersistent)
+            return;
+        if (!Device.editor())
+            g_pGamePersistent->Environment().SetWeather(args, true);
     }
 };
 
@@ -1898,6 +1915,7 @@ void CCC_RegisterCommands()
     CMD4(CCC_Integer, "ph_tri_clear_disable_count", &ph_console::ph_tri_clear_disable_count, 0, 255);
     CMD4(CCC_FloatBlock, "ph_tri_query_ex_aabb_rate", &ph_console::ph_tri_query_ex_aabb_rate, 1.01f, 3.f);
     CMD3(CCC_Mask, "g_no_clip", &psActorFlags, AF_NO_CLIP);
+    CMD1(CCC_SetWeather, "set_weather");
 #endif // DEBUG
 
 #ifndef MASTER_GOLD

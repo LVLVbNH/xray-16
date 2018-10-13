@@ -1,26 +1,26 @@
 #include "pch_script.h"
 #include "Actor_Flags.h"
-#include "hudmanager.h"
+#include "HUDManager.h"
 
 #ifdef DEBUG
 #include "PHDebug.h"
 #endif // DEBUG
 
 #include "alife_space.h"
-#include "hit.h"
+#include "Hit.h"
 #include "PHDestroyable.h"
 #include "Car.h"
-#include "xrserver_objects_alife_monsters.h"
+#include "xrServer_Objects_ALife_Monsters.h"
 #include "CameraLook.h"
 #include "CameraFirstEye.h"
-#include "effectorfall.h"
+#include "EffectorFall.h"
 #include "EffectorBobbing.h"
 #include "ActorEffector.h"
 #include "EffectorZoomInertion.h"
 #include "SleepEffector.h"
 #include "character_info.h"
 #include "CustomOutfit.h"
-#include "actorcondition.h"
+#include "ActorCondition.h"
 #include "UIGameCustom.h"
 #include "xrPhysics/matrix_utils.h"
 #include "clsid_game.h"
@@ -38,29 +38,29 @@
 #include "ai_sounds.h"
 #include "ai_space.h"
 #include "trade.h"
-#include "inventory.h"
+#include "Inventory.h"
 
 #include "Level.h"
 #include "GamePersistent.h"
 #include "game_cl_base.h"
 #include "game_cl_single.h"
-#include "xrmessages.h"
+#include "xrMessages.h"
 #include "string_table.h"
 #include "xrCDB/Intersect.hpp"
 
 #include "alife_registry_wrappers.h"
 #include "Include/xrRender/Kinematics.h"
-#include "artefact.h"
+#include "Artefact.h"
 #include "CharacterPhysicsSupport.h"
 #include "material_manager.h"
 #include "xrPhysics/IColisiondamageInfo.h"
 #include "ui/UIMainIngameWnd.h"
 #include "map_manager.h"
-#include "GameTaskManager.h"
+#include "GametaskManager.h"
 #include "actor_memory.h"
-#include "Script_Game_Object.h"
-#include "Game_Object_Space.h"
-#include "script_callback_ex.h"
+#include "script_game_object.h"
+#include "game_object_space.h"
+#include "xrScriptEngine/script_callback_ex.h"
 #include "InventoryBox.h"
 #include "location_manager.h"
 #include "player_hud.h"
@@ -69,10 +69,10 @@
 #include "Include/xrRender/UIRender.h"
 
 #include "xrAICore/Navigation/ai_object_location.h"
-#include "ui/uiMotionIcon.h"
+#include "ui/UIMotionIcon.h"
 #include "ui/UIActorMenu.h"
 #include "ActorHelmet.h"
-#include "UI/UIDragDropReferenceList.h"
+#include "ui/UIDragDropReferenceList.h"
 #include "xrCore/xr_token.h"
 
 const u32 patch_frames = 50;
@@ -387,13 +387,13 @@ void CActor::Load(LPCSTR section)
             char buf[256];
 
             GEnv.Sound->create(
-                sndDie[0], strconcat(sizeof(buf), buf, *cName(), "\\die0"), st_Effect, SOUND_TYPE_MONSTER_DYING);
+                sndDie[0], strconcat(sizeof(buf), buf, *cName(), DELIMITER "die0"), st_Effect, SOUND_TYPE_MONSTER_DYING);
             GEnv.Sound->create(
-                sndDie[1], strconcat(sizeof(buf), buf, *cName(), "\\die1"), st_Effect, SOUND_TYPE_MONSTER_DYING);
+                sndDie[1], strconcat(sizeof(buf), buf, *cName(), DELIMITER "die1"), st_Effect, SOUND_TYPE_MONSTER_DYING);
             GEnv.Sound->create(
-                sndDie[2], strconcat(sizeof(buf), buf, *cName(), "\\die2"), st_Effect, SOUND_TYPE_MONSTER_DYING);
+                sndDie[2], strconcat(sizeof(buf), buf, *cName(), DELIMITER "die2"), st_Effect, SOUND_TYPE_MONSTER_DYING);
             GEnv.Sound->create(
-                sndDie[3], strconcat(sizeof(buf), buf, *cName(), "\\die3"), st_Effect, SOUND_TYPE_MONSTER_DYING);
+                sndDie[3], strconcat(sizeof(buf), buf, *cName(), DELIMITER "die3"), st_Effect, SOUND_TYPE_MONSTER_DYING);
 
             m_HeavyBreathSnd.create(
                 pSettings->r_string(section, "heavy_breath_snd"), st_Effect, SOUND_TYPE_MONSTER_INJURING);
@@ -433,7 +433,6 @@ void CActor::Load(LPCSTR section)
     m_AutoPickUp_AABB_Offset =
         READ_IF_EXISTS(pSettings, r_fvector3, section, "AutoPickUp_AABB_offs", Fvector().set(0, 0, 0));
 
-    CStringTable string_table;
     m_sCharacterUseAction = "character_use";
     m_sDeadCharacterUseAction = "dead_character_use";
     m_sDeadCharacterUseOrDragAction = "dead_character_use_or_drag";
@@ -1339,7 +1338,7 @@ void CActor::shedule_Update(u32 DT)
         {
             if (m_pUsableObject && m_pUsableObject->tip_text())
             {
-                m_sDefaultObjAction = CStringTable().translate(m_pUsableObject->tip_text());
+                m_sDefaultObjAction = StringTable().translate(m_pUsableObject->tip_text());
             }
             else
             {

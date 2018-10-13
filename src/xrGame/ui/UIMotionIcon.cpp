@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "UIMainIngameWnd.h"
 #include "UIMotionIcon.h"
 #include "UIXmlInit.h"
@@ -24,7 +24,7 @@ void CUIMotionIcon::ResetVisibility()
 void CUIMotionIcon::Init(Frect const& zonemap_rect)
 {
     CUIXml uiXml;
-    uiXml.Load(CONFIG_PATH, UI_PATH, MOTION_ICON_XML);
+    uiXml.Load(CONFIG_PATH, UI_PATH, UI_PATH_DEFAULT, MOTION_ICON_XML);
 
     CUIXmlInit xml_init;
 

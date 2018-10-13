@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "WeaponMagazinedWGrenade.h"
 #include "Entity.h"
 #include "ParticlesObject.h"
@@ -216,8 +216,8 @@ bool CWeaponMagazinedWGrenade::Action(u16 cmd, u32 flags)
     return false;
 }
 
-#include "inventory.h"
-#include "inventoryOwner.h"
+#include "Inventory.h"
+#include "InventoryOwner.h"
 void CWeaponMagazinedWGrenade::state_Fire(float dt)
 {
     VERIFY(fOneShotTime > 0.f);
@@ -956,13 +956,13 @@ bool CWeaponMagazinedWGrenade::GetBriefInfo(II_BriefInfo& info)
     if (ae != 0 && m_magazine.size() != 0)
     {
         LPCSTR ammo_type = m_ammoTypes[m_magazine.back().m_LocalAmmoType].c_str();
-        info.name._set(CStringTable().translate(pSettings->r_string(ammo_type, "inv_name_short")));
+        info.name._set(StringTable().translate(pSettings->r_string(ammo_type, "inv_name_short")));
         info.icon._set(ammo_type);
     }
     else
     {
         LPCSTR ammo_type = m_ammoTypes[m_ammoType].c_str();
-        info.name._set(CStringTable().translate(pSettings->r_string(ammo_type, "inv_name_short")));
+        info.name._set(StringTable().translate(pSettings->r_string(ammo_type, "inv_name_short")));
         info.icon._set(ammo_type);
     }
 

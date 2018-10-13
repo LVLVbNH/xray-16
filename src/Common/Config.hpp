@@ -16,7 +16,7 @@
 /* Scripts */
 #define MORE_INVENTORY_SLOTS // Adds 5 more slots CUSTOM_SLOT_1..5
 #define GAME_OBJECT_EXTENDED_EXPORTS // see: script_game_object*.cpp/h
-#define GAME_OBJECT_TESTING_EXPORTS // see: script_game_object4.cpp  functions for object testing (ie. is_stalker(), is_heli())
+#define GAME_OBJECT_CASTING_EXPORTS // see: script_game_object4.cpp  functions for object casting (ie. cast_Car(), cast_Heli())
 #define NAMESPACE_LEVEL_EXPORTS // see: level_script.cpp
 
 /* Visual */
@@ -32,6 +32,10 @@
 /* Sound: */
 #define NEW_SOUNDS // use new sounds. Please enclose any new sound additions with this define
 #define LAYERED_SND_SHOOT// see comment down below
+
+/* Debug: */
+//#define USE_LOG_TIMING
+
 
 /* LAYERED_SND_SHOOT by Alundaio
 When defined, it will allow you to play a group of sounds from a specified section for snd_shoot.

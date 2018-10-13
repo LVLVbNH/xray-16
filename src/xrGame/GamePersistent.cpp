@@ -1,12 +1,12 @@
 #include "pch_script.h"
-#include "gamepersistent.h"
+#include "GamePersistent.h"
 #include "xrCore/FMesh.hpp"
-#include "xrEngine/xr_ioconsole.h"
+#include "xrEngine/XR_IOConsole.h"
 #include "xrEngine/GameMtlLib.h"
 #include "Include/xrRender/Kinematics.h"
 #include "xrEngine/profiler.h"
 #include "MainMenu.h"
-#include "UICursor.h"
+#include "xrUICore/Cursor/UICursor.h"
 #include "game_base_space.h"
 #include "Level.h"
 #include "ParticlesObject.h"
@@ -15,10 +15,10 @@
 #include "stalker_velocity_holder.h"
 
 #include "ActorEffector.h"
-#include "actor.h"
-#include "spectator.h"
+#include "Actor.h"
+#include "Spectator.h"
 
-#include "UI/UItextureMaster.h"
+#include "xrUICore/XML/UITextureMaster.h"
 
 #include "xrEngine/xrSASH.h"
 #include "ai_space.h"
@@ -26,9 +26,9 @@
 
 #include "holder_custom.h"
 #include "game_cl_base.h"
-#include "xrserver_objects_alife_monsters.h"
+#include "xrServer_Objects_ALife_Monsters.h"
 #include "xrServerEntities/xrServer_Object_Base.h"
-#include "UI/UIGameTutorial.h"
+#include "ui/UIGameTutorial.h"
 #include "xrEngine/GameFont.h"
 #include "xrEngine/PerformanceAlert.hpp"
 #include "xrEngine/xr_input.h"
@@ -36,7 +36,7 @@
 #include "ui/UILoadingScreen.h"
 
 #ifndef MASTER_GOLD
-#include "custommonster.h"
+#include "CustomMonster.h"
 #endif // MASTER_GOLD
 
 #ifndef _EDITOR
@@ -51,7 +51,7 @@ void FillUIStyleToken()
     UIStyleToken.emplace_back("ui_style_default", 0);
 
     string_path path;
-    strconcat(sizeof(path), path, UI_PATH, "\\styles\\");
+    strconcat(sizeof(path), path, UI_PATH, DELIMITER "styles" DELIMITER);
     FS.update_path(path, _game_config_, path);
     auto styles = FS.file_list_open(path, FS_ListFolders | FS_RootOnly);
     if (styles != nullptr)
@@ -59,7 +59,7 @@ void FillUIStyleToken()
         int i = 1; // It's 1, because 0 is default style
         for (const auto& style : *styles)
         {
-            const auto pos = strchr(style, '\\');
+            const auto pos = strchr(style, _DELIMITER);
             *pos = '\0'; // we don't need that backslash in the end
             UIStyleToken.emplace_back(xr_strdup(style), i++); // It's important to have postfix increment!
         }
@@ -82,7 +82,7 @@ void SetupUIStyle()
             selectedStyle = token.name;
 
     string128 selectedStylePath;
-    strconcat(sizeof(selectedStylePath), selectedStylePath, UI_PATH, "\\styles\\", selectedStyle);
+    strconcat(sizeof(selectedStylePath), selectedStylePath, UI_PATH, DELIMITER "styles" DELIMITER, selectedStyle);
 
     UI_PATH = xr_strdup(selectedStylePath);
     defaultUIStyle = false;
@@ -116,9 +116,8 @@ CGamePersistent::CGamePersistent(void)
 
     ZeroMemory(ambient_sound_next_time, sizeof(ambient_sound_next_time));
 
-    m_pUI_core = NULL;
-    m_pMainMenu = NULL;
-    m_intro = NULL;
+    m_pMainMenu = nullptr;
+    m_intro = nullptr;
     m_intro_event.bind(this, &CGamePersistent::start_logo_intro);
 #ifdef DEBUG
     m_frame_counter = 0;
@@ -207,7 +206,7 @@ void CGamePersistent::OnAppStart()
     GMLib.Load();
     init_game_globals();
     inherited::OnAppStart();
-    m_pUI_core = new ui_core();
+    GEnv.UI = new UICore();
     m_pMainMenu = new CMainMenu();
 }
 
@@ -217,7 +216,7 @@ void CGamePersistent::OnAppEnd()
         m_pMainMenu->Activate(false);
 
     xr_delete(m_pMainMenu);
-    xr_delete(m_pUI_core);
+    xr_delete(GEnv.UI);
 
     inherited::OnAppEnd();
 
@@ -466,6 +465,7 @@ void CGamePersistent::WeathersUpdate()
 
 bool allow_intro()
 {
+#if defined(WINDOWS)
 #ifdef MASTER_GOLD
     if (g_SASH.IsRunning())
 #else // #ifdef MASTER_GOLD
@@ -475,6 +475,7 @@ bool allow_intro()
         return false;
     }
     else
+#endif
         return true;
 }
 
@@ -869,7 +870,7 @@ void CGamePersistent::LoadTitle(bool change_tip, shared_str map_name)
             tip_num = m_functor(map_name.c_str());
         }
         //		tip_num = 83;
-        xr_sprintf(buff, "%s%d:", CStringTable().translate("ls_tip_number").c_str(), tip_num);
+        xr_sprintf(buff, "%s%d:", StringTable().translate("ls_tip_number").c_str(), tip_num);
         shared_str tmp = buff;
 
         if (is_single)
@@ -878,7 +879,7 @@ void CGamePersistent::LoadTitle(bool change_tip, shared_str map_name)
             xr_sprintf(buff, "ls_mp_tip_%d", tip_num);
 
         pApp->LoadTitleInt(
-            CStringTable().translate("ls_header").c_str(), tmp.c_str(), CStringTable().translate(buff).c_str());
+            StringTable().translate("ls_header").c_str(), tmp.c_str(), StringTable().translate(buff).c_str());
     }
 }
 
@@ -887,7 +888,7 @@ void CGamePersistent::SetLoadStageTitle(pcstr ls_title)
     string256 buff;
     if (ls_title)
     {
-        xr_sprintf(buff, "%s%s", CStringTable().translate(ls_title).c_str(), "...");
+        xr_sprintf(buff, "%s%s", StringTable().translate(ls_title).c_str(), "...");
         pApp->SetLoadStageTitle(buff);
     }
     else
@@ -913,7 +914,7 @@ void CGamePersistent::SetEffectorDOF(const Fvector& needed_dof)
 }
 
 void CGamePersistent::RestoreEffectorDOF() { SetEffectorDOF(m_dof[3]); }
-#include "hudmanager.h"
+#include "HUDManager.h"
 
 //	m_dof		[4];	// 0-dest 1-current 2-from 3-original
 void CGamePersistent::UpdateDof()
@@ -943,7 +944,6 @@ void CGamePersistent::UpdateDof()
     (m_dof[0].z < m_dof[2].z) ? clamp(m_dof[1].z, m_dof[0].z, m_dof[2].z) : clamp(m_dof[1].z, m_dof[2].z, m_dof[0].z);
 }
 
-#include "ui\uimainingamewnd.h"
 void CGamePersistent::OnSectorChanged(int sector)
 {
     if (CurrentGameUI())
@@ -953,5 +953,5 @@ void CGamePersistent::OnSectorChanged(int sector)
 void CGamePersistent::OnAssetsChanged()
 {
     IGame_Persistent::OnAssetsChanged();
-    CStringTable().rescan();
+    StringTable().rescan();
 }

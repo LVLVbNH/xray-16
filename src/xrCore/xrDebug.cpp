@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #pragma hdrstop
 
+#include "SDL.h"
+#include "SDL_syswm.h"
+
 #include "xrDebug.h"
 #include "os_clipboard.h"
 #include "log.h"
@@ -48,6 +51,7 @@ static BOOL bException = FALSE;
 #elif defined(LINUX)
 #include <sys/user.h>
 #include <sys/ptrace.h>
+#include <execinfo.h>
 #endif
 #pragma comment(lib, "FaultRep.lib")
 
@@ -63,7 +67,7 @@ static BOOL bException = FALSE;
 #error CPU architecture is not supported.
 #endif
 
-namespace
+/*namespace
 {
 ICN void* GetInstructionPtr()
 {
@@ -88,7 +92,7 @@ ICN void* GetInstructionPtr()
 #endif
 #endif
 }
-}
+}*/
 
 // XXX: Probably rename this to AssertionResult?
 enum MessageBoxResult
@@ -350,15 +354,21 @@ xr_vector<xr_string> xrDebug::BuildStackTrace(PCONTEXT threadCtx, u16 maxFramesC
 
     return traceResult;
 }
+#endif // defined(WINDOWS)
 
 SStringVec xrDebug::BuildStackTrace(u16 maxFramesCount)
 {
+#if defined(WINDOWS)
     CONTEXT currentThreadCtx = {};
 
-    RtlCaptureContext(&currentThreadCtx); /// GetThreadContext can't be used on the current thread 
+    RtlCaptureContext(&currentThreadCtx); /// GetThreadContext can't be used on the current thread
     currentThreadCtx.ContextFlags = CONTEXT_FULL;
 
     return BuildStackTrace(&currentThreadCtx, maxFramesCount);
+#else
+#pragma todo("Implement stack trace for Linux")
+    return {"Implement stack trace for Linux"};
+#endif
 }
 
 void xrDebug::LogStackTrace(const char* header)
@@ -370,7 +380,6 @@ void xrDebug::LogStackTrace(const char* header)
         Msg("%s", frame.c_str());
     }
 }
-#endif // defined(WINDOWS)
 
 
 void xrDebug::GatherInfo(char* assertionInfo, size_t bufferSize, const ErrorLocation& loc, const char* expr,
@@ -426,6 +435,7 @@ void xrDebug::GatherInfo(char* assertionInfo, size_t bufferSize, const ErrorLoca
 #ifdef USE_OWN_ERROR_MESSAGE_WINDOW
     buffer += xr_sprintf(buffer, bufferSize, "stack trace:\n\n");
 #endif // USE_OWN_ERROR_MESSAGE_WINDOW
+#if defined(WINDOWS)
     xr_vector<xr_string> stackTrace = BuildStackTrace();
     for (size_t i = 2; i < stackTrace.size(); i++)
     {
@@ -435,6 +445,21 @@ void xrDebug::GatherInfo(char* assertionInfo, size_t bufferSize, const ErrorLoca
         buffer += xr_sprintf(buffer, bufferSize, "%s\n", stackTrace[i].c_str());
 #endif // USE_OWN_ERROR_MESSAGE_WINDOW
     }
+#elif defined(LINUX)
+    void *array[20];
+    int nptrs = backtrace(array, 20);     // get void*'s for all entries on the stack
+    char **strings = backtrace_symbols(array, nptrs);
+
+    if(strings)
+        for (size_t i = 0; i < nptrs; i++)
+        {
+            if (shared_str_initialized)
+                Log(strings[i]);
+    #ifdef USE_OWN_ERROR_MESSAGE_WINDOW
+            buffer += xr_sprintf(buffer, bufferSize, "%s\n", strings[i]);
+    #endif // USE_OWN_ERROR_MESSAGE_WINDOW
+        }
+#endif
     if (shared_str_initialized)
         FlushLog();
     os_clipboard::copy_to_clipboard(assertionInfo);
@@ -574,22 +599,22 @@ int out_of_memory_handler(size_t size)
 
 extern LPCSTR log_name();
 
-#ifdef USE_BUG_TRAP
 void WINAPI xrDebug::PreErrorHandler(INT_PTR)
 {
+#if defined(USE_BUG_TRAP) && defined(WINDOWS)
     if (!xr_FS || !FS.m_Flags.test(CLocatorAPI::flReady))
         return;
     string_path logDir;
     __try
     {
         FS.update_path(logDir, "$logs$", "");
-        if (logDir[0] != '\\' && logDir[1] != ':')
+        if (logDir[0] != _DELIMITER && logDir[1] != ':')
         {
             string256 currentDir;
             _getcwd(currentDir, sizeof(currentDir));
             string256 relDir;
             xr_strcpy(relDir, logDir);
-            strconcat(sizeof(logDir), logDir, currentDir, "\\", relDir);
+            strconcat(sizeof(logDir), logDir, currentDir, DELIMITER, relDir);
         }
     }
     __except (EXCEPTION_EXECUTE_HANDLER)
@@ -598,7 +623,6 @@ void WINAPI xrDebug::PreErrorHandler(INT_PTR)
     }
     string_path temp;
     strconcat(sizeof(temp), temp, logDir, log_name());
-#if defined(WINDOWS)
     BT_AddLogFile(temp);
     if (*BugReportFile)
         BT_AddLogFile(BugReportFile);
@@ -613,9 +637,9 @@ void WINAPI xrDebug::PreErrorHandler(INT_PTR)
 #endif
 }
 
-void xrDebug::SetupExceptionHandler(const bool& dedicated)
+void xrDebug::SetupExceptionHandler()
 {
-#if defined(WINDOWS)
+#if defined(USE_BUG_TRAP) && defined(WINDOWS)
     const auto commandLine = GetCommandLine();
 
     // disable 'appname has stopped working' popup dialog
@@ -623,7 +647,7 @@ void xrDebug::SetupExceptionHandler(const bool& dedicated)
     SetErrorMode(prevMode | SEM_NOGPFAULTERRORBOX);
     BT_InstallSehFilter();
 
-    if (!dedicated && !strstr(commandLine, "-silent_error_mode"))
+    if (!GEnv.isDedicatedServer && !strstr(commandLine, "-silent_error_mode"))
         BT_SetActivityType(BTA_SHOWUI);
     else
         BT_SetActivityType(BTA_SAVEREPORT);
@@ -652,7 +676,6 @@ void xrDebug::SetupExceptionHandler(const bool& dedicated)
     BT_SetSupportEMail("openxray@yahoo.com");
 #endif
 }
-#endif // USE_BUG_TRAP
 
 void xrDebug::FormatLastError(char* buffer, const size_t& bufferSize)
 {
@@ -745,7 +768,7 @@ void _terminate()
         exit(-1);
 #endif
     string4096 assertionInfo;
-    xrDebug::GatherInfo(assertionInfo, DEBUG_INFO, nullptr, "Unexpected application termination");
+    xrDebug::GatherInfo(assertionInfo,sizeof(assertionInfo), DEBUG_INFO, nullptr, "Unexpected application termination");
     xr_strcat(assertionInfo, "Press OK to abort execution\r\n");
     xrDebug::ShowMessage("Fatal Error", assertionInfo);
     exit(-1);
@@ -794,6 +817,7 @@ static void unexpected_handler() { handler_base("unexpected program termination"
 static void abort_handler(int signal) { handler_base("application is aborting"); }
 static void floating_point_handler(int signal) { handler_base("floating point error"); }
 static void illegal_instruction_handler(int signal) { handler_base("illegal instruction"); }
+static void segmentation_fault_handler(int signal) { handler_base("segmentation fault"); }
 static void termination_handler(int signal) { handler_base("termination with exit code 3"); }
 
 void xrDebug::OnThreadSpawn()
@@ -818,14 +842,21 @@ void xrDebug::OnThreadSpawn()
 #if 0 // should be if we use exceptions
     std::set_unexpected(_terminate);
 #endif
+#else //WINDOWS
+    signal(SIGABRT, abort_handler);
+    signal(SIGFPE, floating_point_handler);
+    signal(SIGILL, illegal_instruction_handler);
+    signal(SIGINT, 0);
+    signal(SIGTERM, termination_handler);
+    signal(SIGSEGV, segmentation_fault_handler);
 #endif
 }
 
-void xrDebug::Initialize(const bool& dedicated)
+void xrDebug::Initialize()
 {
     *BugReportFile = 0;
     OnThreadSpawn();
-    SetupExceptionHandler(dedicated);
+    SetupExceptionHandler();
     SDL_SetAssertionHandler(SDLAssertionHandler, nullptr);
     // exception handler to all "unhandled" exceptions
 #if defined(WINDOWS)

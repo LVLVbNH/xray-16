@@ -1,11 +1,11 @@
-#include "stdafx.h"
-#include "weaponammo.h"
+#include "StdAfx.h"
+#include "WeaponAmmo.h"
 #include "xrPhysics/PhysicsShell.h"
-#include "xrserver_objects_alife_items.h"
+#include "xrServer_Objects_ALife_Items.h"
 #include "Actor_Flags.h"
-#include "inventory.h"
-#include "weapon.h"
-#include "level_bullet_manager.h"
+#include "Inventory.h"
+#include "Weapon.h"
+#include "Level_Bullet_Manager.h"
 #include "ai_space.h"
 #include "xrEngine/GameMtlLib.h"
 #include "Level.h"
@@ -67,7 +67,7 @@ void CCartridge::Load(LPCSTR section, u8 LocalAmmoType)
     VERIFY(u16(-1) != bullet_material_idx);
     VERIFY(param_s.fWallmarkSize > 0);
 
-    m_InvShortName = CStringTable().translate(pSettings->r_string(section, "inv_name_short"));
+    m_InvShortName = StringTable().translate(pSettings->r_string(section, "inv_name_short"));
 }
 
 float CCartridge::Weight() const

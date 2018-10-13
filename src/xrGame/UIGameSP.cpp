@@ -1,6 +1,6 @@
 #include "pch_script.h"
-#include "uigamesp.h"
-#include "actor.h"
+#include "UIGameSP.h"
+#include "Actor.h"
 #include "Level.h"
 #include "xrEngine/xr_input.h"
 #include "xrNetServer/NET_Messages.h"
@@ -9,18 +9,18 @@
 #include "attachable_item.h"
 #endif
 
-#include "game_cl_Single.h"
+#include "game_cl_single.h"
 #include "xr_level_controller.h"
-#include "actorcondition.h"
-#include "xrEngine/xr_ioconsole.h"
+#include "ActorCondition.h"
+#include "xrEngine/XR_IOConsole.h"
 #include "Common/object_broker.h"
-#include "GameTaskManager.h"
+#include "GametaskManager.h"
 #include "GameTask.h"
 
 #include "ui/UIActorMenu.h"
 #include "ui/UIPdaWnd.h"
 #include "ui/UITalkWnd.h"
-#include "ui/UIMessageBox.h"
+#include "xrUICore/MessageBox/UIMessageBox.h"
 
 CUIGameSP::CUIGameSP() : m_game(NULL), m_game_objective(NULL)
 {

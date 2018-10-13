@@ -6,9 +6,9 @@
 //	Description : Defines the entry point for the DLL application.
 ////////////////////////////////////////////////////////////////////////////
 
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "object_factory.h"
-#include "ui/xrUIXmlParser.h"
+#include "xrUICore/XML/xrUIXmlParser.h"
 #include "xr_level_controller.h"
 #include "xrEngine/profiler.h"
 
@@ -33,6 +33,7 @@ DLL_API void __cdecl xrFactory_Destroy(IFactoryObject* O) { xr_delete(O); }
 
 void CCC_RegisterCommands();
 
+#ifdef WINDOWS
 BOOL APIENTRY DllMain(HANDLE hModule, u32 ul_reason_for_call, LPVOID lpReserved)
 {
     switch (ul_reason_for_call)
@@ -49,14 +50,39 @@ BOOL APIENTRY DllMain(HANDLE hModule, u32 ul_reason_for_call, LPVOID lpReserved)
 // XXX nitrocaster PROFILER: temporarily disabled due to linkage issues
 // g_profiler			= new CProfiler();
 #endif
+        gStringTable = new CStringTable();
+        StringTable().Init();
         break;
     }
 
     case DLL_PROCESS_DETACH:
     {
         CleanupUIStyleToken();
+        xr_delete(gStringTable);
         break;
     }
     }
     return (TRUE);
 }
+#else
+__attribute__((constructor))
+static void load(int argc, char** argv, char** envp)
+{
+    // Fill ui style token
+    FillUIStyleToken();
+    // register console commands
+    CCC_RegisterCommands();
+    // keyboard binding
+    CCC_RegisterInput();
+#ifdef DEBUG
+// XXX nitrocaster PROFILER: temporarily disabled due to linkage issues
+// g_profiler			= new CProfiler();
+#endif
+}
+
+__attribute__((destructor))
+static void unload()
+{
+    CleanupUIStyleToken();
+}
+#endif

@@ -97,7 +97,7 @@ public:
         u32 dx10_msaa : 1; //	DX10.0 path
         u32 dx10_msaa_hybrid : 1; //	DX10.0 main path with DX10.1 A-test msaa allowed
         u32 dx10_msaa_opt : 1; //	DX10.1 path
-        u32 dx10_gbuffer_opt : 1; //	
+        u32 dx10_gbuffer_opt : 1; //
         u32 dx10_sm4_1 : 1; //	DX10.1 path
         u32 dx10_msaa_alphatest : 2; //	A-test mode
         u32 dx10_msaa_samples : 4;
@@ -193,7 +193,7 @@ public:
 
 private:
     // Loading / Unloading
-    void LoadBuffers(CStreamReader* fs, BOOL _alternative);
+    void LoadBuffers(CStreamReader* fs, bool alternative);
     void LoadVisuals(IReader* fs);
     void LoadLights(IReader* fs);
     void LoadPortals(IReader* fs);
@@ -226,9 +226,9 @@ public:
 public:
     ShaderElement* rimp_select_sh_static(dxRender_Visual* pVisual, float cdist_sq);
     ShaderElement* rimp_select_sh_dynamic(dxRender_Visual* pVisual, float cdist_sq);
-    D3DVERTEXELEMENT9* getVB_Format(int id, BOOL _alt = FALSE);
-    ID3DVertexBuffer* getVB(int id, BOOL _alt = FALSE);
-    ID3DIndexBuffer* getIB(int id, BOOL _alt = FALSE);
+    D3DVERTEXELEMENT9* getVB_Format(int id, bool alternative = false);
+    ID3DVertexBuffer* getVB(int id, bool alternative = false);
+    ID3DIndexBuffer* getIB(int id, bool alternative = false);
     FSlideWindowItem* getSWI(int id);
     IRender_Portal* getPortal(int id);
     IRender_Sector* getSectorActive();
@@ -289,12 +289,12 @@ public:
     virtual void level_Unload();
 
     ID3DBaseTexture* texture_load(LPCSTR fname, u32& msize, bool bStaging = false);
-    virtual HRESULT shader_compile(LPCSTR name, DWORD const* pSrcData, UINT SrcDataLen, LPCSTR pFunctionName,
-        LPCSTR pTarget, DWORD Flags, void*& result);
+    virtual HRESULT shader_compile(
+        LPCSTR name, IReader* fs, LPCSTR pFunctionName, LPCSTR pTarget, DWORD Flags, void*& result);
 
     // Information
     virtual void DumpStatistics(class IGameFont& font, class IPerformanceAlert* alert) override;
-    virtual LPCSTR getShaderPath() { return "r3\\"; }
+    virtual LPCSTR getShaderPath() { return "r3" DELIMITER ""; }
     virtual ref_shader getShader(int id);
     virtual IRender_Sector* getSector(int id);
     virtual IRenderVisual* getVisual(int id);

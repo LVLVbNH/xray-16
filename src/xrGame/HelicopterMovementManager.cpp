@@ -1,11 +1,11 @@
 #include "pch_script.h"
-#include "Helicopter.h"
+#include "helicopter.h"
 #include "Level.h"
 #include "xrAICore/Navigation/PatrolPath/patrol_path.h"
 #include "xrAICore/Navigation/PatrolPath/patrol_path_storage.h"
 #include "script_game_object.h"
 #include "game_object_space.h"
-#include "script_callback_ex.h"
+#include "xrScriptEngine/script_callback_ex.h"
 
 SHeliMovementState::~SHeliMovementState() {}
 void SHeliMovementState::net_Destroy()

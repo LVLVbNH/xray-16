@@ -8,7 +8,7 @@ struct ShaderTypeTraits;
 template <>
 struct ShaderTypeTraits<SVS>
 {
-    typedef CResourceManager::map_VS MapType;
+    using MapType = CResourceManager::map_VS;
 
 #ifdef USE_OGL
     using HWShaderType = GLuint;
@@ -65,7 +65,7 @@ struct ShaderTypeTraits<SVS>
 template <>
 struct ShaderTypeTraits<SPS>
 {
-    typedef CResourceManager::map_PS MapType;
+    using MapType = CResourceManager::map_PS;
 
 #ifdef USE_OGL
     using HWShaderType = GLuint;
@@ -132,7 +132,7 @@ struct ShaderTypeTraits<SPS>
 template <>
 struct ShaderTypeTraits<SGS>
 {
-    typedef CResourceManager::map_GS MapType;
+    using MapType = CResourceManager::map_GS;
 
 #ifdef USE_OGL
     using HWShaderType = GLuint;
@@ -191,7 +191,7 @@ struct ShaderTypeTraits<SGS>
 template <>
 struct ShaderTypeTraits<SHS>
 {
-    typedef CResourceManager::map_HS MapType;
+    using MapType = CResourceManager::map_HS;
 
 #ifdef USE_OGL
     using HWShaderType = GLuint;
@@ -227,7 +227,7 @@ struct ShaderTypeTraits<SHS>
 template <>
 struct ShaderTypeTraits<SDS>
 {
-    typedef CResourceManager::map_DS MapType;
+    using MapType = CResourceManager::map_DS;
 
 #ifdef USE_OGL
     using HWShaderType = GLuint;
@@ -263,7 +263,7 @@ struct ShaderTypeTraits<SDS>
 template <>
 struct ShaderTypeTraits<SCS>
 {
-    typedef CResourceManager::map_CS MapType;
+    using MapType = CResourceManager::map_CS;
 
 #ifdef USE_OGL
     using HWShaderType = GLuint;
@@ -340,7 +340,7 @@ inline CResourceManager::map_CS& CResourceManager::GetShaderMap()
 template <typename T>
 inline T* CResourceManager::CreateShader(const char* name, const char* filename /*= nullptr*/, const bool searchForEntryAndTarget /*= false*/)
 {
-    ShaderTypeTraits<T>::MapType& sh_map = GetShaderMap<ShaderTypeTraits<T>::MapType>();
+    typename ShaderTypeTraits<T>::MapType& sh_map = GetShaderMap<typename ShaderTypeTraits<T>::MapType>();
     LPSTR N = LPSTR(name);
     auto iterator = sh_map.find(N);
 
@@ -392,14 +392,13 @@ inline T* CResourceManager::CreateShader(const char* name, const char* filename 
             FS.update_path(cname, "$game_shaders$", cname);
             file = FS.r_open(cname);
         }
-        R_ASSERT2(file, cname);
+        R_ASSERT3(file, "Shader file doesnt exist:", cname);
 
         // Duplicate and zero-terminate
         const auto size = file->length();
         char* const data = (LPSTR)_alloca(size + 1);
         CopyMemory(data, file->pointer(), size);
         data[size] = 0;
-        FS.r_close(file);
 
         // Select target
         LPCSTR c_target = ShaderTypeTraits<T>::GetCompilationTarget();
@@ -417,8 +416,9 @@ inline T* CResourceManager::CreateShader(const char* name, const char* filename 
 #endif
 
         // Compile
-        HRESULT const _hr = GEnv.Render->shader_compile(name, (DWORD const*)data, size,
-            c_entry, c_target, flags, (void*&)sh);
+        HRESULT const _hr = GEnv.Render->shader_compile(name, file, c_entry, c_target, flags, (void*&)sh);
+
+        FS.r_close(file);
 
         VERIFY(SUCCEEDED(_hr));
 
@@ -432,12 +432,12 @@ inline T* CResourceManager::CreateShader(const char* name, const char* filename 
 }
 
 template <typename T>
-inline void CResourceManager::DestroyShader(const T* sh)
+bool CResourceManager::DestroyShader(const T* sh)
 {
     if (0 == (sh->dwFlags & xr_resource_flagged::RF_REGISTERED))
-        return;
+        return false;
 
-    ShaderTypeTraits<T>::MapType& sh_map = GetShaderMap<ShaderTypeTraits<T>::MapType>();
+   typename ShaderTypeTraits<T>::MapType& sh_map = GetShaderMap<typename ShaderTypeTraits<T>::MapType>();
 
     LPSTR N = LPSTR(*sh->cName);
     auto iterator = sh_map.find(N);
@@ -445,7 +445,9 @@ inline void CResourceManager::DestroyShader(const T* sh)
     if (iterator != sh_map.end())
     {
         sh_map.erase(iterator);
-        return;
+        return true;
     }
+
     Msg("! ERROR: Failed to find compiled shader '%s'", sh->cName.c_str());
+    return false;
 }

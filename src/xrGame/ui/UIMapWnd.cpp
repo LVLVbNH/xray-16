@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "UIMapWnd.h"
 #include "UIMap.h"
 #include "UIXmlInit.h"
@@ -7,16 +7,16 @@
 #include "UIInventoryUtilities.h"
 #include "map_spot.h"
 #include "map_location.h"
-#include "UIFixedScrollBar.h"
-#include "UIFrameWindow.h"
-#include "UIFrameLineWnd.h"
-#include "UITabControl.h"
-#include "UI3tButton.h"
+#include "xrUICore/ScrollBar/UIFixedScrollBar.h"
+#include "xrUICore/Windows/UIFrameWindow.h"
+#include "xrUICore/Windows/UIFrameLineWnd.h"
+#include "xrUICore/TabControl/UITabControl.h"
+#include "xrUICore/Buttons/UI3tButton.h"
 #include "UIMapWndActions.h"
 #include "UIMapWndActionsSpace.h"
-#include "UIHint.h"
+#include "xrUICore/Hint/UIHint.h"
 #include "map_hint.h"
-#include "uicursor.h"
+#include "xrUICore/Cursor/UICursor.h"
 #include "xrEngine/xr_input.h" //remove me !!!
 
 CUIMapWnd* g_map_wnd = NULL; // quick temporary solution -(
@@ -59,7 +59,7 @@ CUIMapWnd::~CUIMapWnd()
 void CUIMapWnd::Init(LPCSTR xml_name, LPCSTR start_from)
 {
     CUIXml uiXml;
-    uiXml.Load(CONFIG_PATH, UI_PATH, xml_name);
+    uiXml.Load(CONFIG_PATH, UI_PATH, UI_PATH_DEFAULT, xml_name);
 
     string512 pth;
     CUIXmlInit xml_init;
@@ -152,7 +152,7 @@ void CUIMapWnd::Init(LPCSTR xml_name, LPCSTR start_from)
 
             l = new CUILevelMap(this);
             R_ASSERT2(pGameIni->section_exist(map_name), map_name.c_str());
-            l->Initialize(map_name, "hud\\default");
+            l->Initialize(map_name, "hud" DELIMITER "default");
 
             l->OptimalFit(m_UILevelFrame->GetWndRect());
         }

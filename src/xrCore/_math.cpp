@@ -1,16 +1,31 @@
 #include "stdafx.h"
-#include <timeapi.h>
+#if defined(WINDOWS)
 #pragma hdrstop
 
-#if defined(WINDOWS)
 #include <intrin.h> // __rdtsc
 #include <process.h>
+
+#if defined(_MSC_VER)
 #include <powerbase.h>
+#elif defined(__GNUC__)
+#include <float.h> // _controlfp
+//#include_next <float.h>
+//how to include mingw32\i686-w64-mingw32\include\float.h
+//instead of mingw32\lib\gcc\i686-w64-mingw32\7.3.0\include\float.h
+//?
+#endif
+
 #elif defined(LINUX)
 #include <x86intrin.h> // __rdtsc
 #include <fpu_control.h>
 #include <pthread.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <sys/prctl.h>
+#include <chrono>
 #endif
+#include <thread>
+#include "SDL.h"
 
 typedef struct _PROCESSOR_POWER_INFORMATION
 {
@@ -35,7 +50,7 @@ XRCORE_API CRandom Random;
  */
 void QueryPerformanceCounter(PLARGE_INTEGER result)
 {
-	u64 nsec_count, nsec_per_tick;
+    u64 nsec_count, nsec_per_tick;
     /*
      * clock_gettime() returns the number of secs. We translate that to number of nanosecs.
      * clock_getres() returns number of seconds per tick. We translate that to number of nanosecs per tick.
@@ -57,6 +72,18 @@ void QueryPerformanceCounter(PLARGE_INTEGER result)
 
      *result = (nsec_count / nsec_per_tick);
 }
+
+DWORD timeGetTime()
+{
+ /*   std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+
+    auto nanosec = now.time_since_epoch();
+
+    return nanosec.count()/(1000000000.0 *60.0 *60.0);
+    */
+    return SDL_GetTicks();
+}
+
 #endif
 
 /*
@@ -185,17 +212,8 @@ void initialize()
 
 namespace CPU
 {
-XRCORE_API u64 clk_per_second;
-XRCORE_API u64 clk_per_milisec;
-XRCORE_API u64 clk_per_microsec;
-XRCORE_API u64 clk_overhead;
+XRCORE_API u64 qpc_freq = SDL_GetPerformanceFrequency();
 
-XRCORE_API float clk_to_seconds;
-XRCORE_API float clk_to_milisec;
-XRCORE_API float clk_to_microsec;
-
-XRCORE_API u64 qpc_freq = 0;
-XRCORE_API u64 qpc_overhead = 0;
 XRCORE_API u32 qpc_counter = 0;
 
 XRCORE_API processor_info ID;
@@ -212,68 +230,6 @@ XRCORE_API u64 GetCLK()
 {
     return __rdtsc();
 }
-
-void Detect()
-{
-    // Timers & frequency
-    u64 start, end;
-    u32 dwStart, dwTest;
-
-    SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS);
-
-    // Detect Freq
-    dwTest = timeGetTime();
-    do
-    {
-        dwStart = timeGetTime();
-    } while (dwTest == dwStart);
-    start = GetCLK();
-    while (timeGetTime() - dwStart < 1000)
-        ;
-    end = GetCLK();
-    clk_per_second = end - start;
-
-    // Detect RDTSC Overhead
-    clk_overhead = 0;
-    u64 dummy = 0;
-    for (int i = 0; i < 256; i++)
-    {
-        start = GetCLK();
-        clk_overhead += GetCLK() - start - dummy;
-    }
-    clk_overhead /= 256;
-
-    // Detect QPC Overhead
-    QueryPerformanceFrequency((PLARGE_INTEGER)&qpc_freq);
-    qpc_overhead = 0;
-    for (int i = 0; i < 256; i++)
-    {
-        start = QPC();
-        qpc_overhead += QPC() - start - dummy;
-    }
-    qpc_overhead /= 256;
-
-    SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
-
-    clk_per_second -= clk_overhead;
-    clk_per_milisec = clk_per_second / 1000;
-    clk_per_microsec = clk_per_milisec / 1000;
-
-#ifndef XR_X64
-    _control87(_PC_64, MCW_PC);
-#endif
-
-    double a, b;
-    a = 1;
-    b = double(clk_per_second);
-    clk_to_seconds = float(double(a / b));
-    a = 1000;
-    b = double(clk_per_second);
-    clk_to_milisec = float(double(a / b));
-    a = 1000000;
-    b = double(clk_per_second);
-    clk_to_microsec = float(double(a / b));
-}
 } // namespace CPU
 
 bool g_initialize_cpu_called = false;
@@ -281,30 +237,22 @@ bool g_initialize_cpu_called = false;
 //------------------------------------------------------------------------------------
 void _initialize_cpu()
 {
-    // General CPU identification
-    if (!query_processor_info(&CPU::ID))
-        FATAL("Can't detect CPU/FPU.");
-
-    CPU::Detect();
-
-    Msg("* Detected CPU: %s [%s], F%d/M%d/S%d, 'rdtsc'", CPU::ID.modelName,
-        +CPU::ID.vendor, CPU::ID.family, CPU::ID.model, CPU::ID.stepping);
 
     string256 features;
     xr_strcpy(features, sizeof(features), "RDTSC");
-    if (CPU::ID.hasFeature(CpuFeature::Mmx)) xr_strcat(features, ", MMX");
-    if (CPU::ID.hasFeature(CpuFeature::_3dNow)) xr_strcat(features, ", 3DNow!");
-    if (CPU::ID.hasFeature(CpuFeature::Sse)) xr_strcat(features, ", SSE");
-    if (CPU::ID.hasFeature(CpuFeature::Sse2)) xr_strcat(features, ", SSE2");
-    if (CPU::ID.hasFeature(CpuFeature::Sse3)) xr_strcat(features, ", SSE3");
-    if (CPU::ID.hasFeature(CpuFeature::MWait)) xr_strcat(features, ", MONITOR/MWAIT");
-    if (CPU::ID.hasFeature(CpuFeature::Ssse3)) xr_strcat(features, ", SSSE3");
-    if (CPU::ID.hasFeature(CpuFeature::Sse41)) xr_strcat(features, ", SSE4.1");
-    if (CPU::ID.hasFeature(CpuFeature::Sse42)) xr_strcat(features, ", SSE4.2");
-    if (CPU::ID.hasFeature(CpuFeature::HT)) xr_strcat(features, ", HTT");
+    if (SDL_HasAltiVec()) xr_strcat(features, ", AltiVec");
+    if (SDL_HasMMX()) xr_strcat(features, ", MMX");
+    if (SDL_Has3DNow()) xr_strcat(features, ", 3DNow!");
+    if (SDL_HasSSE()) xr_strcat(features, ", SSE");
+    if (SDL_HasSSE2()) xr_strcat(features, ", SSE2");
+    if (SDL_HasSSE3()) xr_strcat(features, ", SSE3");
+    if (SDL_HasSSE41()) xr_strcat(features, ", SSE4.1");
+    if (SDL_HasSSE42()) xr_strcat(features, ", SSE4.2");
+    if (SDL_HasAVX()) xr_strcat(features, ", AVX");
+    if (SDL_HasAVX2()) xr_strcat(features, ", AVX2");
 
     Msg("* CPU features: %s", features);
-    Msg("* CPU cores/threads: %d/%d", CPU::ID.n_cores, CPU::ID.n_threads);
+    Msg("* CPU cores/threads: %d/%d", std::thread::hardware_concurrency(), SDL_GetCPUCount());
 
 #if defined(WINDOWS)
     SYSTEM_INFO sysInfo;
@@ -354,7 +302,7 @@ void _initialize_cpu_thread()
     else
         FPU::m24r();
 
-    if (CPU::ID.hasFeature(CpuFeature::Sse))
+    if (SDL_HasSSE())
     {
         //_mm_setcsr ( _mm_getcsr() | (_MM_FLUSH_ZERO_ON+_MM_DENORMALS_ZERO_ON) );
         _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
@@ -386,12 +334,14 @@ struct THREAD_NAME
 
 void thread_name(const char* name)
 {
+    Msg("start new thread [%s]", name);
+#if defined(WINDOWS)
     THREAD_NAME tn;
     tn.dwType = 0x1000;
     tn.szName = name;
     tn.dwThreadID = DWORD(-1);
     tn.dwFlags = 0;
-#if defined(WINDOWS)
+
     __try
     {
         RaiseException(0x406D1388, 0, sizeof(tn) / sizeof(DWORD), (ULONG_PTR*)&tn);
@@ -399,6 +349,8 @@ void thread_name(const char* name)
     __except (EXCEPTION_CONTINUE_EXECUTION)
     {
     }
+#else
+    prctl(PR_SET_NAME, name, 0, 0, 0);
 #endif
 }
 #pragma pack(pop)
@@ -409,7 +361,11 @@ struct THREAD_STARTUP
     char* name;
     void* args;
 };
+#if defined(WINDOWS)
 void __cdecl thread_entry(void* _params)
+#elif defined(LINUX)
+void *__cdecl thread_entry(void* _params)
+#endif
 {
     // initialize
     THREAD_STARTUP* startup = (THREAD_STARTUP*)_params;
@@ -425,7 +381,7 @@ void __cdecl thread_entry(void* _params)
 
 void thread_spawn(thread_t* entry, const char* name, unsigned stack, void* arglist)
 {
-    xrDebug::Initialize(false);
+    xrDebug::Initialize();
 
     THREAD_STARTUP* startup = new THREAD_STARTUP();
     startup->entry = entry;
@@ -434,10 +390,11 @@ void thread_spawn(thread_t* entry, const char* name, unsigned stack, void* argli
 #if defined(WINDOWS)
     _beginthread(thread_entry, stack, startup);
 #elif defined(LINUX)
-    pthread_t handle;
+    pthread_t handle = 0;
     pthread_attr_t attr;
     pthread_attr_init(&attr);
-    pthread_create(&handle, &attr, NULL, arglist); //TODO convert entry
+    pthread_attr_setstacksize(&attr, stack);
+    pthread_create(&handle, &attr, &thread_entry, startup);
     pthread_attr_destroy(&attr);
 #endif
 }

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "HudItem.h"
 #include "physic_item.h"
 #include "Actor.h"
@@ -12,7 +12,7 @@
 #include "xrCore/Animation/SkeletonMotions.hpp"
 #include "xrNetServer/NET_Messages.h"
 
-#include "ui_base.h"
+#include "xrUICore/ui_base.h"
 
 CHudItem::CHudItem()
 {

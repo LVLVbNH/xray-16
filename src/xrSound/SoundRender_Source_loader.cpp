@@ -1,7 +1,7 @@
 #include "stdafx.h"
-
+#if defined(WINDOWS)
 #include <msacm.h>
-
+#endif
 #include "SoundRender_Core.h"
 #include "SoundRender_Source.h"
 
@@ -126,7 +126,12 @@ void CSoundRender_Source::load(pcstr name)
 {
     string_path fn, N;
     xr_strcpy(N, name);
+#ifdef WINDOWS
     xr_strlwr(N);
+#elif defined(LINUX)
+    while (char* sep = strchr(N, '\\')) *sep = '/';
+#endif
+
     if (strext(N))
         *strext(N) = 0;
 

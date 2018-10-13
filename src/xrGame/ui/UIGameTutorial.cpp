@@ -1,14 +1,14 @@
 #include "pch_script.h"
 #include "UIGameTutorial.h"
-#include "UIWindow.h"
-#include "UIStatic.h"
+#include "xrUICore/Windows/UIWindow.h"
+#include "xrUICore/Static/UIStatic.h"
 #include "UIXmlInit.h"
 #include "Common/object_broker.h"
 #include "xrEngine/xr_input.h"
 #include "xr_level_controller.h"
 #include "xrScriptEngine/script_engine.hpp"
 #include "ai_space.h"
-#include "xrEngine/xr_ioconsole.h"
+#include "xrEngine/XR_IOConsole.h"
 #include "UIGameCustom.h"
 #include "UIActorMenu.h"
 #include "UIPdaWnd.h"
@@ -100,14 +100,14 @@ void CUISequencer::Start(LPCSTR tutor_name)
     // Skip any tutorial except "game_loaded", since we need to show "st_press_any_key" hint
     if (load_screen_renderer.IsActive() && xr_strcmp(tutor_name, "game_loaded") != 0)
         return;
-    
+
     VERIFY(m_sequencer_items.size() == 0);
     Device.seqFrame.Add(this, REG_PRIORITY_LOW - 10000);
 
     m_UIWindow = new CUIWindow();
 
     CUIXml uiXml;
-    uiXml.Load(CONFIG_PATH, UI_PATH, "game_tutorials.xml");
+    uiXml.Load(CONFIG_PATH, UI_PATH, UI_PATH_DEFAULT, "game_tutorials.xml");
 
     int items_count = uiXml.GetNodesNum(tutor_name, 0, "item");
     VERIFY(items_count > 0);
@@ -453,7 +453,7 @@ void CUISequencer::IR_OnActivate()
             case kACCEL:
             case kL_LOOKOUT:
             case kR_LOOKOUT:
-            case kWPN_FIRE: 
+            case kWPN_FIRE:
             {
                 IR_OnKeyboardPress(i);
             }

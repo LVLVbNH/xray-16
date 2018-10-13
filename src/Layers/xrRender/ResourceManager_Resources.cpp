@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 
+#if defined(WINDOWS)
 #pragma warning(push)
 #pragma warning(disable : 4995)
 #include <d3dx9.h>
@@ -9,11 +10,12 @@
 #include "xrEngine/Render.h"
 #endif
 #pragma warning(pop)
+#endif
 
 #include "ResourceManager.h"
 #include "tss.h"
-#include "blenders/blender.h"
-#include "blenders/blender_recorder.h"
+#include "blenders/Blender.h"
+#include "blenders/Blender_Recorder.h"
 #include "ShaderResourceTraits.h"
 
 void fix_texture_name(LPSTR fn);
@@ -24,19 +26,19 @@ void simplify_texture(string_path& fn)
     {
         if (strstr(fn, "$user"))
             return;
-        if (strstr(fn, "ui\\"))
+        if (strstr(fn, "ui" DELIMITER))
             return;
         if (strstr(fn, "lmap#"))
             return;
-        if (strstr(fn, "act\\"))
+        if (strstr(fn, "act" DELIMITER))
             return;
-        if (strstr(fn, "fx\\"))
+        if (strstr(fn, "fx" DELIMITER))
             return;
-        if (strstr(fn, "glow\\"))
+        if (strstr(fn, "glow" DELIMITER))
             return;
-        if (strstr(fn, "map\\"))
+        if (strstr(fn, "map" DELIMITER))
             return;
-        xr_strcpy(fn, "ed\\ed_not_existing_texture");
+        xr_strcpy(fn, "ed" DELIMITER "ed_not_existing_texture");
     }
 }
 
@@ -284,7 +286,7 @@ void CResourceManager::DBG_VerifyGeoms()
     */
 }
 
-SGeometry* CResourceManager::CreateGeom(D3DVERTEXELEMENT9* decl, IDirect3DVertexBuffer9* vb, IDirect3DIndexBuffer9* ib)
+SGeometry* CResourceManager::CreateGeom(D3DVERTEXELEMENT9* decl, ID3DVertexBuffer* vb, ID3DIndexBuffer* ib)
 {
     R_ASSERT(decl && vb);
 
@@ -308,7 +310,7 @@ SGeometry* CResourceManager::CreateGeom(D3DVERTEXELEMENT9* decl, IDirect3DVertex
     v_geoms.push_back(Geom);
     return Geom;
 }
-SGeometry* CResourceManager::CreateGeom(u32 FVF, IDirect3DVertexBuffer9* vb, IDirect3DIndexBuffer9* ib)
+SGeometry* CResourceManager::CreateGeom(u32 FVF, ID3DVertexBuffer* vb, ID3DIndexBuffer* ib)
 {
     D3DVERTEXELEMENT9 dcl[MAX_FVF_DECL_SIZE];
     CHK_DX(D3DXDeclaratorFromFVF(FVF, dcl));

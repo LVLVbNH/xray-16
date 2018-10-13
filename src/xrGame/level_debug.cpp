@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "level_debug.h"
 #include "xrEngine/xr_object.h"
 #include "xrEngine/GameFont.h"
@@ -9,7 +9,7 @@
 // Lain: added
 #include "debug_text_tree.h"
 #include "ai/monsters/basemonster/base_monster.h"
-#include "ui_base.h"
+#include "xrUICore/ui_base.h"
 #endif
 
 #ifdef DEBUG

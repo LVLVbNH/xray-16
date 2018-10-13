@@ -9,11 +9,11 @@
 #include "pch_script.h"
 #include "script_entity.h"
 #include "CustomMonster.h"
-#include "xrEngine/feel_vision.h"
+#include "xrEngine/Feel_Vision.h"
 #include "xrCore/Animation/Motion.hpp"
 #include "Include/xrRender/Kinematics.h"
 #include "script_entity_action.h"
-#include "weapon.h"
+#include "Weapon.h"
 #include "ParticlesObject.h"
 #include "script_game_object.h"
 #include "xrScriptEngine/script_engine.hpp"
@@ -26,7 +26,7 @@
 #include "visual_memory_manager.h"
 #include "xrAICore/Navigation/ai_object_location.h"
 #include "movement_manager.h"
-#include "script_callback_ex.h"
+#include "xrScriptEngine/script_callback_ex.h"
 #include "game_object_space.h"
 
 void __stdcall ActionCallback(IKinematics* tpKinematics);

@@ -16,7 +16,7 @@ void CUIDebugFonts::InitDebugFonts(Frect r)
     FillUpList();
 
     m_background.SetWndRect(r);
-    m_background.InitTexture("ui\\ui_debug_font");
+    m_background.InitTexture("ui" DELIMITER "ui_debug_font");
 }
 
 bool CUIDebugFonts::OnKeyboardAction(int dik, EUIMessages keyboard_action)
@@ -46,7 +46,9 @@ void CUIDebugFonts::FillUpList()
         CUITextWnd* pItem = new CUITextWnd();
         pItem->SetWndPos(pos);
         pItem->SetWndSize(sz);
-        xr_sprintf(str, "%s:%s", F->m_font_name.c_str(), CStringTable().translate("Test_Font_String").c_str());
+#ifdef DEBUG
+        xr_sprintf(str, "%s:%s", F->m_font_name.c_str(), StringTable().translate("Test_Font_String").c_str());
+#endif
         pItem->SetFont(F);
         pItem->SetText(str);
         pItem->SetTextComplexMode(false);

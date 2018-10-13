@@ -1,7 +1,7 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "game_sv_teamdeathmatch.h"
-#include "xrserver_objects_alife_monsters.h"
-#include "xrserver.h"
+#include "xrServer_Objects_ALife_Monsters.h"
+#include "xrServer.h"
 #include "Level.h"
 #include "game_cl_mp.h"
 #include "string_table.h"
@@ -9,7 +9,7 @@
 #include <functional>
 #include "xrNetServer/NET_Messages.h"
 
-#include "ui\UIBuyWndShared.h"
+#include "ui/UIBuyWndShared.h"
 
 //-------------------------------------------------------
 extern s32 g_sv_dm_dwFragLimit;
@@ -413,7 +413,7 @@ void game_sv_TeamDeathmatch::OnPlayerKillPlayer(game_PlayerState* ps_killer, gam
                         Msg("--- Kicking player %s", tmp_client->ps->getName());
 #endif
                         LPSTR reason;
-                        STRCONCAT(reason, CStringTable().translate("st_kicked_by_server").c_str());
+                        STRCONCAT(reason, StringTable().translate("st_kicked_by_server").c_str());
                         m_server->DisconnectClient(tmp_client, reason);
                     }
                 }

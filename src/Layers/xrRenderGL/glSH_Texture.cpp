@@ -4,10 +4,12 @@
 #include "../xrRender/ResourceManager.h"
 
 #ifndef _EDITOR
-#include "../../xrEngine/render.h"
+#include "../../xrEngine/Render.h"
 #endif
 
+#ifdef WINDOWS // TODO
 #include "../../xrEngine/tntQAVI.h"
+#endif
 #include "../../xrEngine/xrTheora_Surface.h"
 
 #define		PRIORITY_HIGH	12
@@ -106,6 +108,7 @@ void CTexture::apply_avi(u32 dwStage)
     CHK_GL(glActiveTexture(GL_TEXTURE0 + dwStage));
     CHK_GL(glBindTexture(desc, pSurface));
 
+#ifdef WINDOWS // TODO
     if (pAVI->NeedUpdate())
     {
         // AVI
@@ -114,6 +117,7 @@ void CTexture::apply_avi(u32 dwStage)
         CHK_GL(glTexSubImage2D(desc, 0, 0, 0, m_width, m_height,
             GL_RGBA, GL_UNSIGNED_BYTE, ptr));
     }
+#endif
 };
 
 void CTexture::apply_seq(u32 dwStage)
@@ -170,6 +174,9 @@ void CTexture::Load()
 
     // Check for OGM
     string_path fn;
+#ifdef LINUX
+    while (char* sep = strchr(*cName, '\\')) *sep = '/';
+#endif
     if (FS.exist(fn, "$game_textures$", *cName, ".ogm"))
     {
         // AVI
@@ -212,6 +219,7 @@ void CTexture::Load()
     }
     else if (FS.exist(fn, "$game_textures$", *cName, ".avi"))
     {
+#ifdef WINDOWS // TODO
         // AVI
         pAVI = new CAviPlayerCustom();
 
@@ -244,6 +252,7 @@ void CTexture::Load()
                 pSurface = 0;
             }
         }
+#endif
     }
     else if (FS.exist(fn, "$game_textures$", *cName, ".seq"))
     {
@@ -301,8 +310,8 @@ void CTexture::Load()
 void CTexture::Unload()
 {
 #ifdef DEBUG
-	string_path				msg_buff;
-	sprintf_s(msg_buff, sizeof(msg_buff), "* Unloading texture [%s] pSurface ID=%d", cName.c_str(), pSurface);
+    string_path				msg_buff;
+    sprintf_s(msg_buff, sizeof(msg_buff), "* Unloading texture [%s] pSurface ID=%d", cName.c_str(), pSurface);
 #endif // DEBUG
 
     //.	if (flags.bLoaded)		Msg		("* Unloaded: %s",cName.c_str());

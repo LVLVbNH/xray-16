@@ -1,5 +1,5 @@
-#include "stdafx.h"
-#include "hudtarget.h"
+#include "StdAfx.h"
+#include "HUDTarget.h"
 #include "xrEngine/GameMtlLib.h"
 
 #include "xrEngine/Environment.h"
@@ -10,7 +10,7 @@
 #include "game_cl_base.h"
 #include "xrEngine/IGame_Persistent.h"
 
-#include "ui_base.h"
+#include "xrUICore/ui_base.h"
 #include "InventoryOwner.h"
 #include "relation_registry.h"
 #include "character_info.h"
@@ -19,7 +19,7 @@
 #include "entity_alive.h"
 
 #include "inventory_item.h"
-#include "inventory.h"
+#include "Inventory.h"
 
 #include "ai/monsters/poltergeist/poltergeist.h"
 
@@ -42,7 +42,7 @@ CHUDTarget::CHUDTarget()
 {
     fuzzyShowInfo = 0.f;
     PP.RQ.range = 0.f;
-    hShader->create("hud\\cursor", "ui\\cursor");
+    hShader->create("hud" DELIMITER "cursor", "ui" DELIMITER "cursor");
 
     PP.RQ.set(NULL, 0.f, -1);
 
@@ -180,10 +180,9 @@ void CHUDTarget::Render()
 
                         if (fuzzyShowInfo > 0.5f)
                         {
-                            CStringTable strtbl;
                             F->SetColor(subst_alpha(C, u8(iFloor(255.f * (fuzzyShowInfo - 0.5f) * 2.f))));
-                            F->OutNext("%s", *strtbl.translate(others_inv_owner->Name()));
-                            F->OutNext("%s", *strtbl.translate(others_inv_owner->CharacterInfo().Community().id()));
+                            F->OutNext("%s", *StringTable().translate(others_inv_owner->Name()));
+                            F->OutNext("%s", *StringTable().translate(others_inv_owner->CharacterInfo().Community().id()));
                         }
                     }
 

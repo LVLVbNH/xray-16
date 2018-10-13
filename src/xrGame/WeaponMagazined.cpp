@@ -1,14 +1,14 @@
 #include "pch_script.h"
 
 #include "WeaponMagazined.h"
-#include "actor.h"
+#include "Actor.h"
 #include "ParticlesObject.h"
-#include "scope.h"
-#include "silencer.h"
+#include "Scope.h"
+#include "Silencer.h"
 #include "GrenadeLauncher.h"
-#include "inventory.h"
+#include "Inventory.h"
 #include "InventoryOwner.h"
-#include "xrserver_objects_alife_items.h"
+#include "xrServer_Objects_ALife_Items.h"
 #include "ActorEffector.h"
 #include "EffectorZoomInertion.h"
 #include "xr_level_controller.h"
@@ -17,9 +17,9 @@
 #include "string_table.h"
 #include "MPPlayersBag.h"
 #include "ui/UIXmlInit.h"
-#include "ui/UIStatic.h"
+#include "xrUICore/Static/UIStatic.h"
 #include "game_object_space.h"
-#include "script_callback_ex.h"
+#include "xrScriptEngine/script_callback_ex.h"
 #include "script_game_object.h"
 #include "HudSound.h"
 
@@ -30,7 +30,7 @@ void createWpnScopeXML()
     if (!pWpnScopeXml)
     {
         pWpnScopeXml = new CUIXml();
-        pWpnScopeXml->Load(CONFIG_PATH, UI_PATH, "scopes.xml");
+        pWpnScopeXml->Load(CONFIG_PATH, UI_PATH, UI_PATH_DEFAULT, "scopes.xml");
     }
 }
 
@@ -458,8 +458,8 @@ void CWeaponMagazined::OnStateSwitch(u32 S, u32 oldState)
     case eHiding:
         if (owner)
             m_sounds_enabled = owner->CanPlayShHdRldSounds();
-		if (oldState != eHiding)
-			switch2_Hiding();
+        if (oldState != eHiding)
+            switch2_Hiding();
         break;
     case eHidden: switch2_Hidden(); break;
     }
@@ -695,7 +695,7 @@ void CWeaponMagazined::switch2_Idle()
 }
 
 #ifdef DEBUG
-#include "ai\stalker\ai_stalker.h"
+#include "ai/stalker/ai_stalker.h"
 #include "object_handler_planner.h"
 #endif
 void CWeaponMagazined::switch2_Fire()
@@ -872,7 +872,7 @@ bool CWeaponMagazined::CanAttach(PIItem pIItem)
 
     if (pScope && m_eScopeStatus == ALife::eAddonAttachable &&
         (m_flagsAddOnState & CSE_ALifeItemWeapon::eWeaponAddonScope) == 0 /*&&
-				(m_scopes[cur_scope]->m_sScopeName == pIItem->object().cNameSect())*/)
+                (m_scopes[cur_scope]->m_sScopeName == pIItem->object().cNameSect())*/)
     {
         auto it = m_scopes.begin();
         for (; it != m_scopes.end(); it++)
@@ -930,7 +930,7 @@ bool CWeaponMagazined::Attach(PIItem pIItem, bool b_send_event)
 
     if (pScope && m_eScopeStatus == ALife::eAddonAttachable &&
         (m_flagsAddOnState & CSE_ALifeItemWeapon::eWeaponAddonScope) == 0 /*&&
-	   (m_scopes[cur_scope]->m_sScopeName == pIItem->object().cNameSect())*/)
+       (m_scopes[cur_scope]->m_sScopeName == pIItem->object().cNameSect())*/)
     {
         auto it = m_scopes.begin();
         for (; it != m_scopes.end(); it++)
@@ -1407,13 +1407,13 @@ bool CWeaponMagazined::GetBriefInfo(II_BriefInfo& info)
     if (ae != 0 && m_magazine.size() != 0)
     {
         LPCSTR ammo_type = m_ammoTypes[m_magazine.back().m_LocalAmmoType].c_str();
-        info.name = CStringTable().translate(pSettings->r_string(ammo_type, "inv_name_short"));
+        info.name = StringTable().translate(pSettings->r_string(ammo_type, "inv_name_short"));
         info.icon = ammo_type;
     }
     else
     {
         LPCSTR ammo_type = m_ammoTypes[m_ammoType].c_str();
-        info.name = CStringTable().translate(pSettings->r_string(ammo_type, "inv_name_short"));
+        info.name = StringTable().translate(pSettings->r_string(ammo_type, "inv_name_short"));
         info.icon = ammo_type;
     }
     return true;

@@ -22,12 +22,15 @@ void ParseFile(pcstr path, CMemoryWriter& W, IReader* F, XMLDocument* xml)
             string256 inc_name;
             if (_GetItem(str, 1, inc_name, '"'))
             {
+#if defined(LINUX)
+                while (char* sep = strchr(inc_name, '\\')) *sep = '/';
+#endif
                 IReader* I = nullptr;
-                if (inc_name == strstr(inc_name, "ui\\"))
+                if (inc_name == strstr(inc_name, "ui" DELIMITER ))
                 {
-                    shared_str fn = xml->correct_file_name("ui", strchr(inc_name, '\\') + 1);
+                    shared_str fn = xml->correct_file_name("ui", strchr(inc_name, _DELIMITER) + 1);
                     string_path buff;
-                    strconcat(sizeof buff, buff, "ui\\", fn.c_str());
+                    strconcat(sizeof buff, buff, "ui" DELIMITER , fn.c_str());
                     I = FS.r_open(path, buff);
                 }
 
@@ -45,40 +48,74 @@ void ParseFile(pcstr path, CMemoryWriter& W, IReader* F, XMLDocument* xml)
     }
 }
 
-void XMLDocument::Load(pcstr path_alias, pcstr path, pcstr _xml_filename)
+bool XMLDocument::Load(pcstr path_alias, pcstr path, pcstr xml_filename, bool fatal)
 {
-    shared_str fn = correct_file_name(path, _xml_filename);
+    shared_str fn = correct_file_name(path, xml_filename);
 
     string_path str;
-    xr_sprintf(str, "%s\\%s", path, *fn);
-    return Load(path_alias, str);
+    xr_sprintf(str, "%s" DELIMITER "%s", path, *fn);
+    return Load(path_alias, str, fatal);
 }
 
-//инициализация и загрузка XML файла
-void XMLDocument::Load(pcstr path, pcstr xml_filename)
+// Try to load from the first path, and if it's failed then try the second one
+bool XMLDocument::Load(pcstr path_alias, pcstr path, pcstr path2, pcstr xml_filename, bool fatal /*= true*/)
 {
-    xr_strcpy(m_xml_file_name, xml_filename);
-    // Load and parse xml file
+    shared_str fn = correct_file_name(path, xml_filename);
 
+    string_path str;
+    xr_sprintf(str, "%s" DELIMITER "%s", path, *fn);
+    if (Load(path_alias, str, false))
+        return true;
+
+    xr_sprintf(str, "%s" DELIMITER "%s", path2, *fn);
+    return Load(path_alias, str, fatal);
+}
+
+// Load and parse xml file
+bool XMLDocument::Load(pcstr path, pcstr xml_filename, bool fatal)
+{
     IReader* F = FS.r_open(path, xml_filename);
-    R_ASSERT2(F, xml_filename);
+    if (!F)
+    {
+        if (fatal)
+            R_ASSERT3(F, "Can't find specified xml file", xml_filename);
+        else
+            return false;
+    }
+
+    xr_strcpy(m_xml_file_name, xml_filename);
 
     CMemoryWriter W;
     ParseFile(path, W, F, this);
     W.w_stringZ("");
     FS.r_close(F);
 
-    m_Doc.parse(reinterpret_cast<pcstr>(W.pointer()));
+    return Set(reinterpret_cast<pcstr>(W.pointer()));
+}
+
+// XXX: support #include directive
+bool XMLDocument::Set(pcstr text, bool fatal)
+{
+    R_ASSERT(text != nullptr);
+    m_Doc.parse(text);
 
     if (m_Doc.isError())
     {
         string1024 str;
-        xr_sprintf(str, "XML Error! File: %s Description: %s:%u", m_xml_file_name, m_Doc.error(), m_Doc.errorOffset());
-        char* offsetted = (char*)W.pointer() + m_Doc.errorOffset();
-        R_ASSERT3(false, str, offsetted ? offsetted : "wrong offset");
+        xr_sprintf(str, "XML Error! File: %s Description: %s:%u \n", m_xml_file_name, m_Doc.error(), m_Doc.errorOffset());
+        pcstr offsetted = text + m_Doc.errorOffset();
+
+        if (fatal)
+            R_ASSERT3(false, str, offsetted);
+        else
+            Log(str, offsetted);
+
+        return false;
     }
 
     m_root = m_Doc.firstChildElement();
+
+    return true;
 }
 
 XML_NODE XMLDocument::NavigateToNode(XML_NODE start_node, pcstr path, const size_t node_index) const

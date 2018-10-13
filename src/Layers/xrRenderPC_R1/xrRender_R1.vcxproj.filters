@@ -573,6 +573,9 @@
     <ClInclude Include="..\xrRender\KinematicsAddBoneTransform.hpp">
       <Filter>Refactored\Execution &amp; 3D\Visuals\Skeleton</Filter>
     </ClInclude>
+    <ClInclude Include="..\xrRender\ShaderResourceTraits.h">
+      <Filter>Refactored\Execution &amp; 3D\Shaders\ShaderManager</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -627,9 +630,6 @@
       <Filter>Details</Filter>
     </ClCompile>
     <ClCompile Include="..\xrRender\DetailManager_Decompress.cpp">
-      <Filter>Details</Filter>
-    </ClCompile>
-    <ClCompile Include="..\xrRender\DetailManager_soft.cpp">
       <Filter>Details</Filter>
     </ClCompile>
     <ClCompile Include="..\xrRender\DetailManager_VS.cpp">
@@ -955,6 +955,9 @@
     </ClCompile>
     <ClCompile Include="..\xrRender\ParticleGroup.cpp">
       <Filter>Models\Visuals</Filter>
+    </ClCompile>
+    <ClCompile Include="FStaticRender_Shaders.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -1,14 +1,14 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "UISpawnWnd.h"
 #include "UIXmlInit.h"
 #include "Level.h"
 #include "game_cl_teamdeathmatch.h"
 #include "UIStatix.h"
-#include "UIScrollView.h"
-#include "UI3tButton.h"
+#include "xrUICore/ScrollView/UIScrollView.h"
+#include "xrUICore/Buttons/UI3tButton.h"
 #include "xr_level_controller.h"
-#include "uicursor.h"
-#include "uigamecustom.h"
+#include "xrUICore/Cursor/UICursor.h"
+#include "UIGameCustom.h"
 
 CUISpawnWnd::CUISpawnWnd() : m_iCurTeam(0)
 {
@@ -58,7 +58,7 @@ CUISpawnWnd::~CUISpawnWnd()
 void CUISpawnWnd::Init()
 {
     CUIXml xml_doc;
-    xml_doc.Load(CONFIG_PATH, UI_PATH, "spawn.xml");
+    xml_doc.Load(CONFIG_PATH, UI_PATH, UI_PATH_DEFAULT, "spawn.xml");
 
     CUIXmlInit::InitWindow(xml_doc, "team_selector", 0, this);
     CUIXmlInit::InitStatic(xml_doc, "team_selector:caption", 0, m_pCaption);

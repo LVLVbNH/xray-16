@@ -220,14 +220,14 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pugixml_vs2017_static", "..
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "LuaJIT", "LuaJIT", "{DAEF6FB5-4F98-4B34-B049-8828EFEC9250}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BuildVm", "..\Externals\LuaJIT\src\BuildVm.vcxproj", "{58AE014E-0DA3-4D9B-9034-21984C305447}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BuildVm", "..\Externals\LuaJIT-proj\BuildVm.vcxproj", "{58AE014E-0DA3-4D9B-9034-21984C305447}"
 	ProjectSection(ProjectDependencies) = postProject
 		{CDC5E78D-FF1C-4164-AE72-3578F60A27BA} = {CDC5E78D-FF1C-4164-AE72-3578F60A27BA}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "minilua", "..\Externals\LuaJIT\src\minilua.vcxproj", "{CDC5E78D-FF1C-4164-AE72-3578F60A27BA}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "minilua", "..\Externals\LuaJIT-proj\minilua.vcxproj", "{CDC5E78D-FF1C-4164-AE72-3578F60A27BA}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LuaJIT", "..\Externals\LuaJIT\src\LuaJIT.vcxproj", "{632AEEB6-DC06-4E15-9551-B2B09A4B73C5}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LuaJIT", "..\Externals\LuaJIT-proj\LuaJIT.vcxproj", "{632AEEB6-DC06-4E15-9551-B2B09A4B73C5}"
 	ProjectSection(ProjectDependencies) = postProject
 		{58AE014E-0DA3-4D9B-9034-21984C305447} = {58AE014E-0DA3-4D9B-9034-21984C305447}
 	EndProjectSection
@@ -247,6 +247,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xrECore", "editors\xrECore\xrECore.vcxproj", "{87D068EC-1789-4F09-A9EC-54CF276955E0}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xrEditor", "editors\xrEditor\xrEditor.vcxproj", "{BE4B23E7-2CA8-4607-A473-116C4242F23D}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xrUICore", "xrUICore\xrUICore.vcxproj", "{37B3642C-B706-4C93-BC54-BADADC8FC9B1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -1125,6 +1127,18 @@ Global
 		{BE4B23E7-2CA8-4607-A473-116C4242F23D}.Release|x64.Build.0 = Release|x64
 		{BE4B23E7-2CA8-4607-A473-116C4242F23D}.Release|x86.ActiveCfg = Release|Win32
 		{BE4B23E7-2CA8-4607-A473-116C4242F23D}.Release|x86.Build.0 = Release|Win32
+		{37B3642C-B706-4C93-BC54-BADADC8FC9B1}.Debug|x64.ActiveCfg = Debug|x64
+		{37B3642C-B706-4C93-BC54-BADADC8FC9B1}.Debug|x64.Build.0 = Debug|x64
+		{37B3642C-B706-4C93-BC54-BADADC8FC9B1}.Debug|x86.ActiveCfg = Debug|Win32
+		{37B3642C-B706-4C93-BC54-BADADC8FC9B1}.Debug|x86.Build.0 = Debug|Win32
+		{37B3642C-B706-4C93-BC54-BADADC8FC9B1}.Mixed|x64.ActiveCfg = Mixed|x64
+		{37B3642C-B706-4C93-BC54-BADADC8FC9B1}.Mixed|x64.Build.0 = Mixed|x64
+		{37B3642C-B706-4C93-BC54-BADADC8FC9B1}.Mixed|x86.ActiveCfg = Mixed|Win32
+		{37B3642C-B706-4C93-BC54-BADADC8FC9B1}.Mixed|x86.Build.0 = Mixed|Win32
+		{37B3642C-B706-4C93-BC54-BADADC8FC9B1}.Release|x64.ActiveCfg = Release|x64
+		{37B3642C-B706-4C93-BC54-BADADC8FC9B1}.Release|x64.Build.0 = Release|x64
+		{37B3642C-B706-4C93-BC54-BADADC8FC9B1}.Release|x86.ActiveCfg = Release|Win32
+		{37B3642C-B706-4C93-BC54-BADADC8FC9B1}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

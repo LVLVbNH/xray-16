@@ -1,14 +1,14 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "Level.h"
 #include "Level_Bullet_Manager.h"
-#include "xrserver.h"
+#include "xrServer.h"
 #include "game_cl_base.h"
-#include "xrmessages.h"
+#include "xrMessages.h"
 #include "xrGameSpyServer.h"
 #include "xrEngine/x_ray.h"
 #include "xrEngine/device.h"
 #include "xrEngine/IGame_Persistent.h"
-#include "xrEngine/xr_ioconsole.h"
+#include "xrEngine/XR_IOConsole.h"
 #include "MainMenu.h"
 #include "string_table.h"
 #include "UIGameCustom.h"
@@ -274,11 +274,10 @@ bool CLevel::net_start6()
             LPCSTR level_id_string = NULL;
             LPCSTR dialog_string = NULL;
             LPCSTR download_url = !!map_data.m_map_download_url ? map_data.m_map_download_url.c_str() : "";
-            CStringTable st;
             LPCSTR tmp_map_ver = !!map_data.m_map_version ? map_data.m_map_version.c_str() : "";
 
-            STRCONCAT(level_id_string, st.translate("st_level"), ":", map_data.m_name.c_str(), "(", tmp_map_ver, "). ");
-            STRCONCAT(dialog_string, level_id_string, st.translate("ui_st_map_not_found"));
+            STRCONCAT(level_id_string, StringTable().translate("st_level"), ":", map_data.m_name.c_str(), "(", tmp_map_ver, "). ");
+            STRCONCAT(dialog_string, level_id_string, StringTable().translate("ui_st_map_not_found"));
 
             DEL_INSTANCE(g_pGameLevel);
             Console->Execute("main_menu on");
@@ -294,11 +293,10 @@ bool CLevel::net_start6()
             LPCSTR level_id_string = NULL;
             LPCSTR dialog_string = NULL;
             LPCSTR download_url = !!map_data.m_map_download_url ? map_data.m_map_download_url.c_str() : "";
-            CStringTable st;
             LPCSTR tmp_map_ver = !!map_data.m_map_version ? map_data.m_map_version.c_str() : "";
 
-            STRCONCAT(level_id_string, st.translate("st_level"), ":", map_data.m_name.c_str(), "(", tmp_map_ver, "). ");
-            STRCONCAT(dialog_string, level_id_string, st.translate("ui_st_map_data_corrupted"));
+            STRCONCAT(level_id_string, StringTable().translate("st_level"), ":", map_data.m_name.c_str(), "(", tmp_map_ver, "). ");
+            STRCONCAT(dialog_string, level_id_string, StringTable().translate("ui_st_map_data_corrupted"));
 
             g_pGameLevel->net_Stop();
             DEL_INSTANCE(g_pGameLevel);
