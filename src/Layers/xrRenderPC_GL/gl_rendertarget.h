@@ -50,6 +50,8 @@ public:
     IBlender* b_accum_reflected_msaa[8];
     IBlender* b_ssao;
     IBlender* b_ssao_msaa[8];
+    IBlender* b_fxaa;
+
 #ifdef DEBUG
 	struct		dbg_line_t		{
 		Fvector	P0,P1;
@@ -75,6 +77,8 @@ public:
     ref_rt rt_Accumulator_temp;// only for HW which doesn't feature fp16 blend
     ref_rt rt_Generic_0; // 32bit		(r,g,b,a)				// post-process, intermidiate results, etc.
     ref_rt rt_Generic_1; // 32bit		(r,g,b,a)				// post-process, intermidiate results, etc.
+    //  Second viewport
+    ref_rt rt_secondVP; // 32bit		(r,g,b,a)				// #SM+#-- +SecondVP+
     //	Igor: for volumetric lights
     ref_rt rt_Generic_2; // 32bit		(r,g,b,a)				// post-process, intermidiate results, etc.
     ref_rt rt_Bloom_1; // 32bit, dim/4	(r,g,b,?)
@@ -120,6 +124,10 @@ private:
     ref_rt rt_half_depth;
     ref_shader s_ssao;
     ref_shader s_ssao_msaa[8];
+
+    //FXAA
+    ref_shader s_fxaa;
+    ref_geom g_fxaa;
 
     // Accum
     ref_shader s_accum_mask;
@@ -252,6 +260,7 @@ public:
     void phase_scene_end();
     void phase_occq();
     void phase_ssao();
+    void phase_fxaa();
     void phase_downsamp();
     void phase_wallmarks();
     void phase_smap_direct(light* L, u32 sub_phase);

@@ -6,19 +6,8 @@
 #include "xrCommon/xr_stack.h"
 #include "xrUICore/FontManager/FontManager.h"
 
-static constexpr pcstr UI_PATH_DEFAULT = "ui";
-XRUICORE_API extern pcstr UI_PATH;
-
 class CUICursor;
 class CUIGameCustom;
-
-class CDeviceResetNotifier : public pureDeviceReset
-{
-public:
-    CDeviceResetNotifier() { Device.seqDeviceReset.Add(this, REG_PRIORITY_NORMAL); };
-    virtual ~CDeviceResetNotifier() { Device.seqDeviceReset.Remove(this); };
-    virtual void OnDeviceReset(){};
-};
 
 class XRUICORE_API UICore : public CDeviceResetNotifier
 {

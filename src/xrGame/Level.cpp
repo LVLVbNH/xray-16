@@ -110,8 +110,6 @@ CLevel::CLevel()
     Msg("%s", Core.Params);
 }
 
-extern CAI_Space* g_ai_space;
-
 CLevel::~CLevel()
 {
     xr_delete(g_player_hud);
@@ -442,7 +440,10 @@ void CLevel::OnFrame()
     if (!GEnv.isDedicatedServer)
     {
         if (g_mt_config.test(mtMap))
+        {
+            R_ASSERT(m_map_manager);
             Device.seqParallel.push_back(fastdelegate::FastDelegate0<>(m_map_manager, &CMapManager::Update));
+        }
         else
             MapManager().Update();
         if (IsGameTypeSingle() && Device.dwPrecacheFrame == 0)
@@ -551,6 +552,7 @@ void CLevel::OnFrame()
     {
         if (g_mt_config.test(mtLevelSounds))
         {
+            R_ASSERT(m_level_sound_manager);
             Device.seqParallel.push_back(
                 fastdelegate::FastDelegate0<>(m_level_sound_manager, &CLevelSoundManager::Update));
         }
@@ -600,7 +602,9 @@ void CLevel::OnRender()
 
     GEnv.Render->AfterWorldRender(); //--#SM+#-- +SecondVP+
 
-    HUD().RenderUI();
+    if (!Device.IsAnselActive)
+        HUD().RenderUI();
+
 #ifdef DEBUG
     draw_wnds_rects();
     physics_world()->OnRender();

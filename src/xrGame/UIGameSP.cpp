@@ -45,6 +45,14 @@ void CUIGameSP::HideShownDialogs()
     }
 }
 
+void CUIGameSP::ReinitDialogs()
+{
+    delete_data(TalkMenu);
+    TalkMenu = new CUITalkWnd();
+    delete_data(UIChangeLevelWnd);
+    UIChangeLevelWnd = new CChangeLevelWnd();
+}
+
 void CUIGameSP::SetClGame(game_cl_GameState* g)
 {
     inherited::SetClGame(g);
@@ -83,6 +91,11 @@ void CUIGameSP::OnFrame()
             m_game_objective = NULL;
         }
     }
+}
+
+void CUIGameSP::OnUIReset()
+{
+    ReinitDialogs();
 }
 
 bool CUIGameSP::IR_UIOnKeyboardPress(int dik)

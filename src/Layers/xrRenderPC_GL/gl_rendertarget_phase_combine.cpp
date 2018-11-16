@@ -46,6 +46,19 @@ void CRenderTarget::phase_combine()
 
     //*** exposure-pipeline
     u32 gpu_id = Device.dwFrame % HW.Caps.iGPUNum;
+
+    if (Device.m_SecondViewport.IsSVPActive()) //--#SM+#-- +SecondVP+
+    {
+        // clang-format off
+        gpu_id = (Device.dwFrame - 1) % HW.Caps.iGPUNum;	// Фикс "мерцания" tonemapping (HDR) после выключения двойного рендера. 
+                                                            // Побочный эффект - при работе двойного рендера скорость изменения tonemapping (HDR) падает в два раза
+                                                            // Мерцание связано с тем, что HDR для своей работы хранит уменьшенние копии "прошлых кадров"
+                                                            // Эти кадры относительно похожи друг на друга, однако при включенном двойном рендере
+                                                            // в половине кадров оказывается картинка из второго рендера, и поскольку она часто может отличатся по цвету\яркости
+                                                            // то при попытке создания "плавного" перехода между ними получается эффект мерцания
+        // clang-format on
+    }
+
     {
         t_LUM_src->surface_set(GL_TEXTURE_2D, rt_LUM_pool[gpu_id * 2 + 0]->pRT);
         t_LUM_dest->surface_set(GL_TEXTURE_2D, rt_LUM_pool[gpu_id * 2 + 1]->pRT);
@@ -67,12 +80,16 @@ void CRenderTarget::phase_combine()
             phase_ssao();
     }
 
+	FLOAT ColorRGBA[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     // low/hi RTs
     if (!RImplementation.o.dx10_msaa)
+    {
+        HW.pDevice->ClearRenderTargetView(rt_Generic_0->pRT, ColorRGBA);
+        HW.pDevice->ClearRenderTargetView(rt_Generic_1->pRT, ColorRGBA);
         u_setrt(rt_Generic_0, rt_Generic_1, 0, HW.pBaseZB);
+    }
     else
     {
-        FLOAT ColorRGBA[4] = {0.0f, 0.0f, 0.0f, 0.0f};
         HW.pDevice->ClearRenderTargetView(rt_Generic_0_r->pRT, ColorRGBA);
         HW.pDevice->ClearRenderTargetView(rt_Generic_1_r->pRT, ColorRGBA);
         u_setrt(rt_Generic_0_r, rt_Generic_1_r, 0, RImplementation.Target->rt_MSAADepth->pZRT);
@@ -343,6 +360,14 @@ void CRenderTarget::phase_combine()
        }
        */
 
+    //FXAA
+    if (ps_r2_fxaa)
+    {
+        PIX_EVENT(FXAA);
+        phase_fxaa();
+        RCache.set_Stencil(FALSE);
+    }
+
     // PP enabled ?
     //	Render to RT texture to be able to copy RT even in windowed mode.
     BOOL PP_Complex = u_need_PP() | (BOOL)RImplementation.m_bMakeAsyncSS;
@@ -355,14 +380,14 @@ void CRenderTarget::phase_combine()
     if (RImplementation.o.dx10_msaa)
     {
         if (PP_Complex) u_setrt(rt_Generic, 0, 0, HW.pBaseZB); // LDR RT
-        else u_setrt(Device.dwWidth, Device.dwHeight, HW.pBaseRT,NULL,NULL, HW.pBaseZB);
+        else u_setrt(Device.dwWidth, Device.dwHeight, HW.pBaseRT, 0, 0, HW.pBaseZB);
     }
     else
     {
         if (PP_Complex) u_setrt(rt_Color, 0, 0, HW.pBaseZB); // LDR RT
-        else u_setrt(Device.dwWidth, Device.dwHeight, HW.pBaseRT,NULL,NULL, HW.pBaseZB);
+        else u_setrt(Device.dwWidth, Device.dwHeight, HW.pBaseRT, 0, 0, HW.pBaseZB);
     }
-    //. u_setrt				( Device.dwWidth,Device.dwHeight,HW.pBaseRT,NULL,NULL,HW.pBaseZB);
+    //. u_setrt				( Device.dwWidth,Device.dwHeight,HW.pBaseRT, 0, 0,HW.pBaseZB);
     RCache.set_CullMode(CULL_NONE);
     RCache.set_Stencil(FALSE);
 
@@ -483,8 +508,8 @@ void CRenderTarget::phase_combine()
     //*** exposure-pipeline-clear
     {
         std::swap(rt_LUM_pool[gpu_id * 2 + 0], rt_LUM_pool[gpu_id * 2 + 1]);
-        t_LUM_src->surface_set(GL_TEXTURE_2D, NULL);
-        t_LUM_dest->surface_set(GL_TEXTURE_2D, NULL);
+        t_LUM_src->surface_set(GL_TEXTURE_2D, 0);
+        t_LUM_dest->surface_set(GL_TEXTURE_2D, 0);
     }
 
 #ifdef DEBUG
@@ -595,8 +620,8 @@ void CRenderTarget::phase_combine()
 void CRenderTarget::phase_wallmarks()
 {
     // Targets
-    RCache.set_RT(NULL, 2);
-    RCache.set_RT(NULL, 1);
+    RCache.set_RT(0, 2);
+    RCache.set_RT(0, 1);
     if (!RImplementation.o.dx10_msaa)
         u_setrt(rt_Color,NULL,NULL, HW.pBaseZB);
     else

@@ -207,10 +207,7 @@ bool CInput::get_dik_name(int dik, LPSTR dest_str, int dest_sz)
         if (dik == SDL_SCANCODE_UNKNOWN)
             keyname = "Unknown";
         else
-        {
-            Msg("! Can't convert dik_name for dik[%d]", dik);
             return false;
-        }
     }
 
     xr_strcpy(dest_str, dest_sz, keyname.c_str());
@@ -333,10 +330,14 @@ void CInput::OnFrame(void)
     stats.FrameTime.Begin();
     dwCurTime = RDEVICE.TimerAsync_MMT();
 
-    if (Device.dwPrecacheFrame == 0)
+    if (Device.dwPrecacheFrame == 0 && !Device.IsAnselActive)
     {
         KeyUpdate();
         MouseUpdate();
+    }
+    else
+    {
+        SDL_FlushEvents(SDL_KEYDOWN, SDL_MOUSEWHEEL);
     }
 
     stats.FrameTime.End();

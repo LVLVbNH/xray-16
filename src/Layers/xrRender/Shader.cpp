@@ -54,7 +54,7 @@ BOOL SPass::equal(const SPass& other)
         return FALSE;
     if (vs != other.vs)
         return FALSE;
-#if defined(USE_DX10) || defined(USE_DX11) || defined(USE_OGL)
+#ifndef USE_DX9
     if (gs != other.gs)
         return FALSE;
 #ifdef USE_DX11
@@ -117,12 +117,12 @@ BOOL Shader::equal(Shader* S, int index)
     if(nullptr == E[index] || nullptr == S->E[index])
         return FALSE;
 
-    return (E[index] == S->E[index]);
+    return E[index]->equal(*S->E[index]);
 }
 
 BOOL Shader::equal(Shader* S)
 {
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 5; i++)
     {
         if (!equal(S, i))
             return FALSE;

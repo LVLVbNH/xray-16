@@ -1,7 +1,9 @@
 #include "stdafx.h"
-#pragma hdrstop
 
 #include "XMLDocument.hpp"
+
+pcstr UI_PATH = UI_PATH_DEFAULT;
+pcstr UI_PATH_WITH_DELIMITER = UI_PATH_DEFAULT_WITH_DELIMITER;
 
 XMLDocument::XMLDocument() : m_root(), m_pLocalRoot() {}
 
@@ -22,15 +24,12 @@ void ParseFile(pcstr path, CMemoryWriter& W, IReader* F, XMLDocument* xml)
             string256 inc_name;
             if (_GetItem(str, 1, inc_name, '"'))
             {
-#if defined(LINUX)
-                while (char* sep = strchr(inc_name, '\\')) *sep = '/';
-#endif
                 IReader* I = nullptr;
-                if (inc_name == strstr(inc_name, "ui" DELIMITER ))
+                if (inc_name == strstr(inc_name, UI_PATH_DEFAULT_WITH_DELIMITER))
                 {
-                    shared_str fn = xml->correct_file_name("ui", strchr(inc_name, _DELIMITER) + 1);
+                    shared_str fn = xml->correct_file_name(UI_PATH, strchr(inc_name, _DELIMITER) + 1);
                     string_path buff;
-                    strconcat(sizeof buff, buff, "ui" DELIMITER , fn.c_str());
+                    strconcat(sizeof buff, buff, UI_PATH_WITH_DELIMITER, fn.c_str());
                     I = FS.r_open(path, buff);
                 }
 

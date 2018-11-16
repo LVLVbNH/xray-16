@@ -71,6 +71,7 @@ public:
     u32 dwPrecacheFrame;
     BOOL b_is_Ready;
     BOOL b_is_Active;
+    bool IsAnselActive;
 
     // Engine flow-control
     u32 dwFrame;
@@ -163,7 +164,6 @@ private:
     void _SetupStates();
 
 public:
-    SDL_Window* m_sdlWnd;
 #if defined(WINDOWS)
     LRESULT MsgProc(HWND, UINT, WPARAM, LPARAM);
 #endif
@@ -203,6 +203,7 @@ public:
 
     MessageRegistry<pureFrame> seqFrameMT;
     MessageRegistry<pureDeviceReset> seqDeviceReset;
+    MessageRegistry<pureUIReset> seqUIReset;
     xr_vector<fastdelegate::FastDelegate0<>> seqParallel;
     CSecondVPParams m_SecondViewport; //--#SM+#-- +SecondVP+
 
@@ -313,6 +314,7 @@ private:
     using finalize_function_ptr = XRay::Editor::finalize_function_ptr;
 
     XRay::Module m_editor_module;
+
     initialize_function_ptr m_editor_initialize;
     finalize_function_ptr m_editor_finalize;
     XRay::Editor::ide_base* m_editor;
@@ -345,5 +347,40 @@ public:
     bool b_need_user_input;
 };
 extern ENGINE_API CLoadScreenRenderer load_screen_renderer;
+
+class CDeviceResetNotifier : public pureDeviceReset
+{
+public:
+    CDeviceResetNotifier(const int prio = REG_PRIORITY_NORMAL) { Device.seqDeviceReset.Add(this, prio); }
+    virtual ~CDeviceResetNotifier() { Device.seqDeviceReset.Remove(this); }
+    void OnDeviceReset() override {}
+};
+
+class CUIResetNotifier : public pureUIReset
+{
+public:
+    CUIResetNotifier(const int prio = REG_PRIORITY_NORMAL) { Device.seqUIReset.Add(this, prio); }
+    virtual ~CUIResetNotifier() { Device.seqUIReset.Remove(this); }
+    void OnUIReset() override {}
+};
+
+class CUIResetAndResolutionNotifier : public pureUIReset, pureScreenResolutionChanged
+{
+public:
+    CUIResetAndResolutionNotifier(const int uiResetPrio = REG_PRIORITY_NORMAL, const int resolutionChangedPrio = REG_PRIORITY_NORMAL)
+    {
+        Device.seqUIReset.Add(this, uiResetPrio);
+        Device.seqResolutionChanged.Add(this, resolutionChangedPrio);
+    }
+
+    virtual ~CUIResetAndResolutionNotifier()
+    {
+        Device.seqUIReset.Remove(this);
+        Device.seqResolutionChanged.Remove(this);
+    }
+
+    void OnUIReset() override {}
+    void OnScreenResolutionChanged() override { OnUIReset(); }
+};
 
 #endif

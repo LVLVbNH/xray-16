@@ -67,6 +67,17 @@ CMainMenu* MainMenu() { return (CMainMenu*)g_pGamePersistent->m_pMainMenu; };
 
 CMainMenu::CMainMenu()
 {
+    class CResetEventCb : public CEventNotifierCallbackWithCid
+    {
+        CMainMenu* m_mainmenu;
+
+    public:
+        CResetEventCb(CID cid, CMainMenu* mm) : m_mainmenu(mm), CEventNotifierCallbackWithCid(cid) {}
+        void ProcessEvent() override { m_mainmenu->DestroyInternal(true); }
+    };
+
+    m_script_reset_event_cid = ai().template Subscribe<CResetEventCb>(CAI_Space::EVENT_SCRIPT_ENGINE_RESET, this);
+
     m_Flags.zero();
     m_startDialog = NULL;
     m_screenshotFrame = u32(-1);
@@ -105,8 +116,8 @@ CMainMenu::CMainMenu()
     {
         g_btnHint = new CUIButtonHint();
         g_statHint = new CUIButtonHint();
-#ifdef WINDOWS
         m_pGameSpyFull = new CGameSpy_Full();
+#ifdef WINDOWS
 
         for (u32 i = 0; i < u32(ErrMax); i++)
         {
@@ -125,9 +136,12 @@ CMainMenu::CMainMenu()
         m_pMB_ErrDlgs[DownloadMPMap]->AddCallbackStr(
             "button_yes", MESSAGE_BOX_YES_CLICKED, CUIWndCallback::void_function(this, &CMainMenu::OnDownloadMPMap));
 
+#endif
+
         m_account_mngr = new gamespy_gp::account_manager(m_pGameSpyFull->GetGameSpyGP());
         m_login_mngr = new gamespy_gp::login_manager(m_pGameSpyFull);
         m_profile_store = new gamespy_profile::profile_store(m_pGameSpyFull);
+#ifdef WINDOWS
         m_stats_submitter = new gamespy_profile::stats_submitter(m_pGameSpyFull);
         m_atlas_submit_queue = new atlas_submit_queue(m_stats_submitter);
 #endif
@@ -139,10 +153,11 @@ CMainMenu::CMainMenu()
 CMainMenu::~CMainMenu()
 {
     Device.seqFrame.Remove(this);
+
     xr_delete(g_btnHint);
     xr_delete(g_statHint);
     xr_delete(m_startDialog);
-    g_pGamePersistent->m_pMainMenu = NULL;
+    g_pGamePersistent->m_pMainMenu = nullptr;
 
 #ifdef WINDOWS
     xr_delete(m_account_mngr);
@@ -156,6 +171,8 @@ CMainMenu::~CMainMenu()
 
     xr_delete(m_demo_info_loader);
     delete_data(m_pMB_ErrDlgs);
+
+    ai().Unsubscribe(m_script_reset_event_cid, CAI_Space::EVENT_SCRIPT_ENGINE_RESET);
 }
 
 void CMainMenu::ReadTextureInfo()
@@ -172,14 +189,7 @@ void CMainMenu::ReadTextureInfo()
 
     const auto ParseFileSet = [&]()
     {
-        /*
-         * Original CoP textures_descr
-         * loading time:
-         * Single-threaded ~80 ms
-         * Multi-threaded  ~40 ms
-         * Just a bit of speedup
-        */
-        tbb::parallel_for_each(files, [](const FS_File& file)
+        for (const auto& file : files)
         {
             string_path path, name;
             _splitpath(file.name.c_str(), nullptr, path, name, nullptr);
@@ -187,7 +197,7 @@ void CMainMenu::ReadTextureInfo()
             path[xr_strlen(path) - 1] = '\0'; // cut the latest '\\'
 
             CUITextureMaster::ParseShTexInfo(path, name);
-        });
+        }
     };
 
     UpdateFileSet(UI_PATH_DEFAULT);
@@ -745,6 +755,13 @@ void CMainMenu::OnDeviceReset()
         SetNeedVidRestart();
 }
 
+void CMainMenu::OnUIReset()
+{
+    CUIXmlInitBase::InitColorDefs();
+    ReadTextureInfo();
+    ReloadUI();
+}
+
 // -------------------------------------------------------------------------------------------------
 
 LPCSTR AddHyphens(LPCSTR c)
@@ -845,9 +862,7 @@ void CMainMenu::OnConnectToMasterServerOkClicked(CUIWindow*, void*) { Hide_CTMS_
 LPCSTR CMainMenu::GetGSVer()
 {
     static string256 buff;
-#ifdef WINDOWS
     xr_strcpy(buff, GetGameVersion());
-#endif
     return buff;
 }
 
@@ -873,7 +888,7 @@ LPCSTR CMainMenu::GetPlayerName()
 
 LPCSTR CMainMenu::GetCDKeyFromRegistry()
 {
-    string512 key;
+    string512 key = { 0 };
     GetCDKey_FromRegistry(key);
     m_cdkey._set(key);
     return m_cdkey.c_str();

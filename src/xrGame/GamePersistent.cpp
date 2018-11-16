@@ -34,6 +34,7 @@
 #include "xrEngine/xr_input.h"
 #include "xrEngine/x_ray.h"
 #include "ui/UILoadingScreen.h"
+#include "AnselManager.h"
 
 #ifndef MASTER_GOLD
 #include "CustomMonster.h"
@@ -85,6 +86,10 @@ void SetupUIStyle()
     strconcat(sizeof(selectedStylePath), selectedStylePath, UI_PATH, DELIMITER "styles" DELIMITER, selectedStyle);
 
     UI_PATH = xr_strdup(selectedStylePath);
+
+    strconcat(sizeof(selectedStylePath), selectedStylePath, selectedStylePath, DELIMITER);
+    UI_PATH_WITH_DELIMITER = xr_strdup(selectedStylePath);
+
     defaultUIStyle = false;
 }
 
@@ -97,7 +102,10 @@ void CleanupUIStyleToken()
     }
     UIStyleToken.clear();
     if (!defaultUIStyle)
+    {
         xr_free(UI_PATH);
+        xr_free(UI_PATH_WITH_DELIMITER);
+    }
 }
 
 CGamePersistent::CGamePersistent(void)
@@ -208,6 +216,12 @@ void CGamePersistent::OnAppStart()
     inherited::OnAppStart();
     GEnv.UI = new UICore();
     m_pMainMenu = new CMainMenu();
+
+#ifdef WINDOWS
+    ansel = new AnselManager();
+    ansel->Load();
+    ansel->Init();
+#endif
 }
 
 void CGamePersistent::OnAppEnd()
@@ -223,6 +237,8 @@ void CGamePersistent::OnAppEnd()
     clean_game_globals();
 
     GMLib.Unload();
+
+    xr_delete(ansel);
 }
 
 void CGamePersistent::Start(LPCSTR op) { inherited::Start(op); }
@@ -471,16 +487,25 @@ bool allow_intro()
 #else // #ifdef MASTER_GOLD
     if ((0 != strstr(Core.Params, "-nointro")) || g_SASH.IsRunning())
 #endif // #ifdef MASTER_GOLD
+#else
+    if (0 != strstr(Core.Params, "-nointro"))
+#endif
     {
         return false;
     }
     else
-#endif
         return true;
 }
 
 void CGamePersistent::start_logo_intro()
 {
+    if(!allow_intro()) // TODO this is dirty hack, rewrite!
+    {
+        m_intro_event = 0;
+        Console->Execute("main_menu on");
+        return;
+    }
+
     if (Device.dwPrecacheFrame == 0)
     {
         m_intro_event.bind(this, &CGamePersistent::update_logo_intro);
@@ -641,7 +666,7 @@ void CGamePersistent::OnFrame()
                         C = Actor()->Holder()->Camera();
 
                     Actor()->Cameras().UpdateFromCamera(C);
-                    Actor()->Cameras().ApplyDevice(VIEWPORT_NEAR);
+                    Actor()->Cameras().ApplyDevice();
 #ifdef DEBUG
                     if (psActorFlags.test(AF_NO_CLIP))
                     {
@@ -687,7 +712,7 @@ void CGamePersistent::OnFrame()
                 C = Actor()->Holder()->Camera();
 
             Actor()->Cameras().UpdateFromCamera(C);
-            Actor()->Cameras().ApplyDevice(VIEWPORT_NEAR);
+            Actor()->Cameras().ApplyDevice();
         }
 #endif // MASTER_GOLD
     }
