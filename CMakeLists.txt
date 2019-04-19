@@ -9,6 +9,9 @@ if(NOT WIN32)
 	set(CMAKE_INSTALL_PREFIX "") # Skip all *nix-style installing for a while. Use DESTDIR
 endif()
 
+option ( TBB_PARALLEL "Use tbb::parallel for prarticle and skinning acceleration on SMP." ON )
+option ( NO_TBB_MALLOC "Use standard memory allocation instead of tbbmalloc" ON )
+
 include(cotire)
 
 function(xr_install tgt)
@@ -67,10 +70,26 @@ endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive --std=c++17 -Wno-attributes -pipe -Wl,--no-undefined -fvisibility=hidden")
 
+#set (SANITIZE_FLAGS "-fsanitize=address  -fsanitize=leak -fno-omit-frame-pointer -g -fsanitize=undefined -fno-sanitize=vptr")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SANITIZE_FLAGS}")
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${SANITIZE_FLAGS}")
+set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${SANITIZE_FLAGS}")
+set (CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${SANITIZE_FLAGS}")
+
 set(LUA_LIBRARIES luajit)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "" FORCE)
+endif()
+
+add_definitions ( -msse2 -mfpmath=sse )
+
+if( TBB_PARALLEL )
+  add_definitions ( -DUSE_TBB_PARALLEL )
+endif()
+
+if( NO_TBB_MALLOC )
+  add_definitions ( -DNO_TBB_MALLOC )
 endif()
 
 if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
@@ -83,31 +102,29 @@ set(LUA_FOUND true)
 
 message("CMake build ${CMAKE_BUILD_TYPE}, CFLAGS=${CMAKE_C_FLAGS}, CXXFLAGS=${CMAKE_CXX_FLAGS}")
 
-add_definitions(-D_MT -D_CPPUNWIND -DPURE_DYNAMIC_CAST -DDECLARE_SPECIALIZATION -DM_NOSTDCONTAINERS_EXT -DUSE_OGL)
+add_definitions(-D_MT -D_CPPUNWIND -DPURE_DYNAMIC_CAST -DDECLARE_SPECIALIZATION -DM_NOSTDCONTAINERS_EXT)
+add_definitions(-DLUABIND_DYNAMIC_LINK) #self-explanatory
+add_definitions(-DdSINGLE) # for ODE
 
 set(LUA_INCLUDE_DIR Externals/LuaJIT/src)
 
 if (NOT WIN32)
-if(EXISTS ${CMAKE_SOURCE_DIR}/Externals/cryptopp/dsa.h)
-    file(REMOVE_RECURSE ${CMAKE_SOURCE_DIR}/Externals/cryptopp)
-    file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/Externals/cryptopp)
-endif()
 find_package(GLEW REQUIRED)
 find_package(FreeImage REQUIRED)
 find_package(LockFile REQUIRED)
 find_package(OpenAL REQUIRED)
 find_package(Crypto++ REQUIRED)
-find_package(PugiXML REQUIRED)
 find_package(Theora REQUIRED)
 find_package(OGG REQUIRED)
 find_package(SDL2 REQUIRED)
 find_package(LZO REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(TBB REQUIRED)
+find_package(PCRE REQUIRED)
 endif()
 
 include_directories(${LUA_INCLUDE_DIR})
-include_directories(${CMAKE_SOURCE_DIR} {CMAKE_SOURCE_DIR}/Common ${CMAKE_SOURCE_DIR}/Externals ${CMAKE_SOURCE_DIR}/Externals/gli/external/glm ${CMAKE_SOURCE_DIR}/../sdk/include/loki)
+include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/Common )
 
 add_subdirectory(Externals)
 add_subdirectory(src)

@@ -166,8 +166,6 @@ CGamePersistent::~CGamePersistent(void)
 
 void CGamePersistent::PreStart(LPCSTR op)
 {
-    if (!GEnv.isDedicatedServer)
-        pApp->SetLoadingScreen(new UILoadingScreen());
     inherited::PreStart(op);
 }
 
@@ -217,6 +215,8 @@ void CGamePersistent::OnAppStart()
     GEnv.UI = new UICore();
     m_pMainMenu = new CMainMenu();
 
+    pApp->SetLoadingScreen(new UILoadingScreen());
+
 #ifdef WINDOWS
     ansel = new AnselManager();
     ansel->Load();
@@ -229,6 +229,7 @@ void CGamePersistent::OnAppEnd()
     if (m_pMainMenu->IsActive())
         m_pMainMenu->Activate(false);
 
+    pApp->DestroyLoadingScreen();
     xr_delete(m_pMainMenu);
     xr_delete(GEnv.UI);
 
@@ -482,11 +483,7 @@ void CGamePersistent::WeathersUpdate()
 bool allow_intro()
 {
 #if defined(WINDOWS)
-#ifdef MASTER_GOLD
-    if (g_SASH.IsRunning())
-#else // #ifdef MASTER_GOLD
     if ((0 != strstr(Core.Params, "-nointro")) || g_SASH.IsRunning())
-#endif // #ifdef MASTER_GOLD
 #else
     if (0 != strstr(Core.Params, "-nointro"))
 #endif
@@ -624,6 +621,9 @@ void CGamePersistent::OnFrame()
 #endif
     if (!GEnv.isDedicatedServer && !m_intro_event.empty())
         m_intro_event();
+
+    if (!GEnv.isDedicatedServer && Device.dwPrecacheFrame == 1 && !m_intro && m_intro_event.empty())
+        pApp->LoadForceFinish(); // hack
 
     if (!GEnv.isDedicatedServer && Device.dwPrecacheFrame == 0 && !m_intro && m_intro_event.empty())
         load_screen_renderer.stop();
@@ -880,21 +880,28 @@ void CGamePersistent::LoadTitle(bool change_tip, shared_str map_name)
     pApp->LoadStage();
     if (change_tip)
     {
+        bool noTips = false;
         string512 buff;
         u8 tip_num;
         luabind::functor<u8> m_functor;
-        bool is_single = !xr_strcmp(m_game_params.m_game_type, "single");
+        const bool is_single = !xr_strcmp(m_game_params.m_game_type, "single");
         if (is_single)
         {
-            R_ASSERT(GEnv.ScriptEngine->functor("loadscreen.get_tip_number", m_functor));
-            tip_num = m_functor(map_name.c_str());
+            if (GEnv.ScriptEngine->functor("loadscreen.get_tip_number", m_functor))
+                tip_num = m_functor(map_name.c_str());
+            else
+                noTips = true;
         }
         else
         {
-            R_ASSERT(GEnv.ScriptEngine->functor("loadscreen.get_mp_tip_number", m_functor));
-            tip_num = m_functor(map_name.c_str());
+            if (GEnv.ScriptEngine->functor("loadscreen.get_mp_tip_number", m_functor))
+                tip_num = m_functor(map_name.c_str());
+            else
+                noTips = true;
         }
-        //		tip_num = 83;
+        if (noTips)
+            return;
+
         xr_sprintf(buff, "%s%d:", StringTable().translate("ls_tip_number").c_str(), tip_num);
         shared_str tmp = buff;
 

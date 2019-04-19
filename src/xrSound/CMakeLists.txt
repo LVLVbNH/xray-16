@@ -13,7 +13,6 @@ include_directories(
 #	${CMAKE_CURRENT_SOURCE_DIR}/../../Externals/libogg/include
     ${OGG_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Externals/openal/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../sdk/include
     ${SDL_INCLUDE_DIRS}
     )
 
@@ -24,7 +23,7 @@ list(REMOVE_ITEM ${PROJECT_NAME}__INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/./xr_cda
 list(REMOVE_ITEM ${PROJECT_NAME}__INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/./xr_streamsnd.h")
 list(REMOVE_ITEM ${PROJECT_NAME}__INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/./MusicStream.h")
 
-add_definitions(-DXRSOUND_EXPORTS -DdSINGLE)
+add_definitions(-DXRSOUND_EXPORTS)
 add_library(${PROJECT_NAME} SHARED ${${PROJECT_NAME}__SOURCES} ${${PROJECT_NAME}__INCLUDES})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES COTIRE_CXX_PREFIX_HEADER_INIT "stdafx.h")

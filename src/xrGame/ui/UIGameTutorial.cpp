@@ -97,8 +97,9 @@ bool CUISequenceItem::Stop(bool bForce)
 CUISequencer::CUISequencer() { m_flags.zero(); }
 void CUISequencer::Start(LPCSTR tutor_name)
 {
-    // Skip any tutorial except "game_loaded", since we need to show "st_press_any_key" hint
-    if (load_screen_renderer.IsActive() && xr_strcmp(tutor_name, "game_loaded") != 0)
+    // Skip any tutorial except "game_loaded" and "intro_game", on load screen
+    if (load_screen_renderer.IsActive() && xr_strcmp(tutor_name, "game_loaded") != 0 &&
+        xr_strcmp(tutor_name, "intro_game") != 0)
         return;
 
     VERIFY(m_sequencer_items.size() == 0);
@@ -118,16 +119,15 @@ void CUISequencer::Start(LPCSTR tutor_name)
     m_flags.set(etsOverMainMenu, !!uiXml.Read("over_main_menu", 0, 0));
     int render_prio = uiXml.ReadInt("render_prio", 0, -2);
 
-    CUIXmlInit xml_init;
     if (UI().is_widescreen() && uiXml.NavigateToNode("global_wnd_16", 0))
     {
-        xml_init.AssignColor("tut_gray", color_rgba(255, 255, 255, 255));
-        xml_init.InitWindow(uiXml, "global_wnd_16", 0, m_UIWindow);
+        CUIXmlInit::AssignColor("tut_gray", color_rgba(255, 255, 255, 255));
+        CUIXmlInit::InitWindow(uiXml, "global_wnd_16", 0, m_UIWindow);
     }
     else
     {
-        xml_init.AssignColor("tut_gray", color_rgba(100, 100, 100, 255));
-        xml_init.InitWindow(uiXml, "global_wnd", 0, m_UIWindow);
+        CUIXmlInit::AssignColor("tut_gray", color_rgba(100, 100, 100, 255));
+        CUIXmlInit::InitWindow(uiXml, "global_wnd", 0, m_UIWindow);
     }
 
     XML_NODE bk = uiXml.GetLocalRoot();

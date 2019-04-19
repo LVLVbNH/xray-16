@@ -109,6 +109,8 @@ extern BOOL g_ai_die_in_anomaly;
 int g_inv_highlight_equipped = 0;
 //-Alundaio
 
+int g_first_person_death = 0;
+
 void register_mp_console_commands();
 //-----------------------------------------------------------
 
@@ -1682,34 +1684,51 @@ public:
 
 class CCC_GSCheckForUpdates : public IConsole_Command
 {
-public:
-    CCC_GSCheckForUpdates(LPCSTR N) : IConsole_Command(N) { bEmptyArgsHandled = true; };
-    virtual void Execute(LPCSTR arguments)
+private:
+    CGameSpy_Patching::PatchCheckCallback m_resultCallbackBinded;
+    std::atomic<bool> m_checkInProgress = false;
+    bool m_informNoPatch = true;
+
+    void xr_stdcall ResultCallback(bool success, pcstr VersionName, pcstr URL)
     {
-        if (!MainMenu())
-            return;
-        /*
-        CGameSpy_Available GSA;
-        shared_str result_string;
-        if (!GSA.CheckAvailableServices(result_string))
+        auto mm = MainMenu();
+        if ((success || m_informNoPatch) && mm != nullptr)
         {
-            Msg(*result_string);
-//			return;
-        };
-        CGameSpy_Patching GameSpyPatching;
-        */
-        bool InformOfNoPatch = true;
-        if (arguments && *arguments)
+            mm->OnPatchCheck(success, VersionName, URL);
+        }
+        m_checkInProgress.store(false);
+    }
+
+    void SetupCallParams(pcstr args)
+    {
+        m_informNoPatch = true;
+        if (args && *args)
         {
             int bInfo = 1;
-            sscanf(arguments, "%d", &bInfo);
-            InformOfNoPatch = (bInfo != 0);
+            sscanf(args, "%d", &bInfo);
+            m_informNoPatch = (bInfo != 0);
         }
+    }
+
+public:
+    CCC_GSCheckForUpdates(LPCSTR N) : IConsole_Command(N)
+    {
+        m_resultCallbackBinded.bind(this, &CCC_GSCheckForUpdates::ResultCallback);
+        bEmptyArgsHandled = true;
+    };
+
+    virtual void Execute(LPCSTR arguments)
+    {
+        auto mm = MainMenu();
+        if (mm == nullptr)
+            return;
+
 #ifdef WINDOWS
-        //		GameSpyPatching.CheckForPatch(InformOfNoPatch);
-        CGameSpy_Patching::PatchCheckCallback cb;
-        cb.bind(MainMenu(), &CMainMenu::OnPatchCheck);
-        MainMenu()->GetGS()->GetGameSpyPatching()->CheckForPatch(InformOfNoPatch, cb);
+        if (!m_checkInProgress.exchange(true))
+        {
+            SetupCallParams(arguments);
+            mm->GetGS()->GetGameSpyPatching()->CheckForPatch(true, m_resultCallbackBinded);
+        }
 #endif
     }
 };
@@ -1967,6 +1986,7 @@ void CCC_RegisterCommands()
     CMD3(CCC_Mask, "g_dynamic_music", &psActorFlags, AF_DYNAMIC_MUSIC);
     CMD3(CCC_Mask, "g_important_save", &psActorFlags, AF_IMPORTANT_SAVE);
     CMD4(CCC_Integer, "g_inv_highlight_equipped", &g_inv_highlight_equipped, 0, 1);
+    CMD4(CCC_Integer, "g_first_person_death", &g_first_person_death, 0, 1);
 
 #ifdef DEBUG
     CMD1(CCC_ShowSmartCastStats, "show_smart_cast_stats");
@@ -2042,7 +2062,7 @@ void CCC_RegisterCommands()
 
     extern float ik_cam_shift_tolerance;
     CMD4(CCC_Float, "ik_cam_shift_tolerance", &ik_cam_shift_tolerance, 0.f, 2.f);
-    float ik_cam_shift_speed;
+    extern float ik_cam_shift_speed;
     CMD4(CCC_Float, "ik_cam_shift_speed", &ik_cam_shift_speed, 0.f, 1.f);
     extern BOOL dbg_draw_doors;
     CMD4(CCC_Integer, "dbg_draw_doors", &dbg_draw_doors, FALSE, TRUE);

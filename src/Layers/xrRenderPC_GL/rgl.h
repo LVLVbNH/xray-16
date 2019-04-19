@@ -179,6 +179,7 @@ public:
     float o_hemi_cube[CROS_impl::NUM_FACES];
     float o_sun;
     GLuint q_sync_point[CHWCaps::MAX_GPUS];
+    //GLsync q_sync_point[CHWCaps::MAX_GPUS];
     u32 q_sync_count;
 
     bool m_bMakeAsyncSS;
@@ -356,6 +357,8 @@ public:
     BOOL occ_visible(sPoly& P) override;
 
     // Main
+    void BeforeFrame() override;
+
     void Calculate() override;
     void Render() override;
     void Screenshot(ScreenshotMode mode = SM_NORMAL, LPCSTR name = nullptr) override;
@@ -366,6 +369,8 @@ public:
 
     void BeforeWorldRender() override; //--#SM+#-- +SecondVP+ Procedure is called before world render and post-effects
     void AfterWorldRender() override;  //--#SM+#-- +SecondVP+ Procedure is called after world render and before UI
+
+    void MakeContextCurrent(bool acquire) override;
 
     // Render mode
     void rmNear() override;

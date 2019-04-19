@@ -124,7 +124,7 @@ void CRenderTarget::u_compute_texgen_screen(Fmatrix& m_Texgen)
     Fmatrix m_TexelAdjust =
     {
         0.5f, 0.0f, 0.0f, 0.0f,
-        0.0f, -0.5f, 0.0f, 0.0f,
+        0.0f, 0.5f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
         //	Removing half pixel offset
         //0.5f + o_w,			0.5f + o_h,			0.0f,			1.0f
@@ -140,7 +140,7 @@ void CRenderTarget::u_compute_texgen_jitter(Fmatrix& m_Texgen_J)
     Fmatrix m_TexelAdjust =
     {
         0.5f, 0.0f, 0.0f, 0.0f,
-        0.0f, -0.5f, 0.0f, 0.0f,
+        0.0f, 0.5f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
         0.5f, 0.5f, 0.0f, 1.0f
     };
@@ -267,7 +267,7 @@ CRenderTarget::CRenderTarget()
     param_noise_fps = 25.f;
     param_noise_scale = 1.f;
 
-    im_noise_time = 1 / 100;
+    im_noise_time = 1.0f / 100.0f;
     im_noise_shift_w = 0;
     im_noise_shift_h = 0;
 
@@ -920,28 +920,19 @@ CRenderTarget::~CRenderTarget()
     glDeleteTextures(1, &t_ss_async);
 
     // Textures
-    t_material->surface_set(GL_TEXTURE_2D, 0);
+    t_material->surface_set(GL_TEXTURE_3D, 0);
     glDeleteTextures(1, &t_material_surf);
+    t_material.destroy();
 
     t_LUM_src->surface_set(GL_TEXTURE_2D, 0);
     t_LUM_dest->surface_set(GL_TEXTURE_2D, 0);
+    t_LUM_src.destroy();
+    t_LUM_dest.destroy();
 
-#ifdef DEBUG
-    GLuint	pSurf = 0;
-
-    pSurf = t_envmap_0->surface_get();
-    glDeleteTextures(1, &pSurf);
-
-    pSurf = t_envmap_1->surface_get();
-    glDeleteTextures(1, &pSurf);
-#endif // DEBUG
     t_envmap_0->surface_set(GL_TEXTURE_CUBE_MAP, 0);
     t_envmap_1->surface_set(GL_TEXTURE_CUBE_MAP, 0);
     t_envmap_0.destroy();
     t_envmap_1.destroy();
-
-    //	TODO: DX10: Check if we need old style SMAPs
-    //	_RELEASE					(rt_smap_ZB);
 
     // Jitter
     for (int it = 0; it < TEX_jitter_count; it++)

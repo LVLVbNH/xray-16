@@ -11,6 +11,8 @@
 #include <ctype.h>
 #include <limits.h> // for PAGESIZE...
 #include <math.h>
+#include <sched.h>
+
 #include <algorithm> // for min max
 
 #include <string>
@@ -20,6 +22,7 @@
 #include <sys/mman.h> // for mmap / munmap
 #include <dirent.h>
 #include <utime.h>
+#include <ctime>
 
 #define _LINUX // for GameSpy
 
@@ -85,7 +88,7 @@ inline void _splitpath(const char* path, // Path Input
         )
 {
     if(!path)
-        return EINVAL;
+        return;
     
     const char *p, *end;
 
@@ -403,6 +406,11 @@ inline int strncat_s(char * dest, size_t num, const char * source, size_t count)
 }
 
 #define _vsnprintf vsnprintf
+inline int vsnprintf_s(char* buffer, size_t size, size_t, const char* format, va_list list)
+{
+    //TODO add bound check
+    return vsnprintf(buffer, size, format, list);
+}
 #define vsprintf_s(dest, size, format, args) vsprintf(dest, format, args)
 #define _alloca alloca
 #define _snprintf snprintf
@@ -1081,7 +1089,7 @@ typedef void *HIC;
 #define D3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR    0x30000
 #define D3DTSS_TCI_SPHEREMAP                      0x40000
 
-inline BOOL SwitchToThread() { return (0 == pthread_yield()); }
+inline BOOL SwitchToThread() { return (0 == sched_yield()); }
 
 inline void convert_path_separators(char * path)
 {
@@ -1096,3 +1104,5 @@ inline void restore_path_separators(char * path)
 {
     while (char* sep = strchr(path, '/')) *sep = '\\'; //
 }
+
+inline tm* localtime_safe(const time_t *time, struct tm* result){ return localtime_r(time, result); }

@@ -53,7 +53,7 @@ void CSheduler::DumpStatistics(IGameFont& font, IPerformanceAlert* alert)
 {
     stats.FrameEnd();
     const float percentage = 100.f * stats.Update.result / Device.GetStats().EngineTotal.result;
-    font.OutNext("Scheduler:");
+    font.OutNext("Object Scheduler:");
     font.OutNext("- update:     %2.2fms, %2.1f%%", stats.Update.result, percentage);
     font.OutNext("- load:       %2.2fms", stats.Load);
     if (alert && stats.Update.result > 3.0f)
@@ -511,7 +511,7 @@ void Scheduler::DumpStatistics(IGameFont& font, IPerformanceAlert* alert)
 {
     stats.FrameEnd();
     const float percentage = 100.f * stats.Update.result / Device.GetStats().EngineTotal.result;
-    font.OutNext("SchedulerMT:");
+    font.OutNext("Object Scheduler MT:");
     font.OutNext("- update:     %2.2fms, %2.1f%%", stats.Update.result, percentage);
     font.OutNext("- load:       %2.2fms", stats.Load);
     if (alert && stats.Update.result > 3.0f)
@@ -788,11 +788,9 @@ void Scheduler::ProcessUpdateQueue()
     const auto dwTime = Device.dwTimeGlobal;
     CTimer eTimer;
 
-    tbb::parallel_sort(UpdateQueue.begin(), UpdateQueue.end(), std::less<Item>());
+    ACCELERATED_SORT(UpdateQueue.begin(), UpdateQueue.end(), std::less<Item>());
 
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, UpdateQueue.size()), [&](const tbb::blocked_range<size_t>& range)
-    {
-        for (size_t i = range.begin(); i < range.end(); ++i)
+    FOR_START(size_t, 0, UpdateQueue.size(), i)
         {
             auto item = UpdateQueue[i];
 
@@ -869,9 +867,9 @@ void Scheduler::ProcessUpdateQueue()
                 break;
             }
         }
-    });
+    FOR_END
 
-    tbb::parallel_sort(UpdateQueue.begin(), UpdateQueue.end(), std::less<Item>());
+    ACCELERATED_SORT(UpdateQueue.begin(), UpdateQueue.end(), std::less<Item>());
 
     // always try to decrease target
     psShedulerTarget -= psShedulerReaction;

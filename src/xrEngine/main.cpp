@@ -51,6 +51,8 @@ ENGINE_API void InitEngine()
 {
     Engine.Initialize();
     Device.Initialize();
+
+    Console->OnDeviceInitialize();
 }
 
 namespace
@@ -72,26 +74,31 @@ public:
 };
 }
 
-ENGINE_API void InitSettings()
+template <typename T>
+void InitConfig(T& config, pcstr name, bool fatal = true,
+    bool readOnly = true, bool loadAtStart = true, bool saveAtEnd = true,
+    u32 sectCount = 0, const CInifile::allow_include_func_t& allowIncludeFunc = nullptr)
 {
     string_path fname;
-    FS.update_path(fname, "$game_config$", "system.ltx");
-#ifdef DEBUG
-    Msg("Updated path to system.ltx is %s", fname);
-#endif
-    pSettings = new CInifile(fname, TRUE);
-    CHECK_OR_EXIT(pSettings->section_count(),
+    FS.update_path(fname, "$game_config$", name);
+    config = new CInifile(fname, readOnly, loadAtStart, saveAtEnd, sectCount, allowIncludeFunc);
+
+    CHECK_OR_EXIT(config->section_count() || !fatal,
         make_string("Cannot find file %s.\nReinstalling application may fix this problem.", fname));
+}
+
+ENGINE_API void InitSettings()
+{
     xr_auth_strings_t ignoredPaths, checkedPaths;
     fill_auth_check_params(ignoredPaths, checkedPaths); //TODO port xrNetServer to Linux
     PathIncludePred includePred(&ignoredPaths);
     CInifile::allow_include_func_t includeFilter;
     includeFilter.bind(&includePred, &PathIncludePred::IsIncluded);
-    pSettingsAuth = new CInifile(fname, TRUE, TRUE, FALSE, 0, includeFilter);
-    FS.update_path(fname, "$game_config$", "game.ltx");
-    pGameIni = new CInifile(fname, TRUE);
-    CHECK_OR_EXIT(pGameIni->section_count(),
-        make_string("Cannot find file %s.\nReinstalling application may fix this problem.", fname));
+
+    InitConfig(pSettings, "system.ltx");
+    InitConfig(pSettingsAuth, "system.ltx", true, true, true, false, 0, includeFilter);
+    InitConfig(pSettingsOpenXRay, "openxray.ltx", false, true, true, false);
+    InitConfig(pGameIni, "game.ltx");
 }
 
 ENGINE_API void InitConsole()
@@ -124,8 +131,13 @@ ENGINE_API void destroySettings()
 {
     auto s = const_cast<CInifile**>(&pSettings);
     xr_delete(*s);
+
     auto sa = const_cast<CInifile**>(&pSettingsAuth);
     xr_delete(*sa);
+
+    auto so = const_cast<CInifile**>(&pSettingsOpenXRay);
+    xr_delete(*so);
+
     xr_delete(pGameIni);
 }
 
@@ -149,6 +161,36 @@ void execUserScript()
 {
     Console->Execute("default_controls");
     Console->ExecuteScript(Console->ConfigFile);
+}
+
+void CheckAndSetupRenderer()
+{
+    if (GEnv.isDedicatedServer)
+    {
+        Console->Execute("renderer renderer_r1");
+        return;
+    }
+
+    if (strstr(Core.Params, "-gl"))
+        Console->Execute("renderer renderer_gl");
+    else if (strstr(Core.Params, "-r4"))
+        Console->Execute("renderer renderer_r4");
+    else if (strstr(Core.Params, "-r3"))
+        Console->Execute("renderer renderer_r3");
+    else if (strstr(Core.Params, "-r2.5"))
+        Console->Execute("renderer renderer_r2.5");
+    else if (strstr(Core.Params, "-r2a"))
+        Console->Execute("renderer renderer_r2a");
+    else if (strstr(Core.Params, "-r2"))
+        Console->Execute("renderer renderer_r2");
+    else if (strstr(Core.Params, "-r1"))
+        Console->Execute("renderer renderer_r1");
+    else
+    {
+        CCC_LoadCFG_custom cmd("renderer ");
+        cmd.Execute(Console->ConfigFile);
+        renderer_allow_override = true;
+    }
 }
 
 void slowdownthread(void*)
@@ -253,38 +295,17 @@ ENGINE_API int RunApplication()
     }
 
     FPU::m24r();
-    InitEngine();
+
     InitInput();
     InitConsole();
+
     Engine.External.CreateRendererList();
+    CheckAndSetupRenderer();
+
+    InitEngine();
 
     if (CheckBenchmark())
         return 0;
-
-    if (!GEnv.isDedicatedServer)
-    {
-        if (strstr(Core.Params, "-gl"))
-            Console->Execute("renderer renderer_gl");
-        else if (strstr(Core.Params, "-r4"))
-            Console->Execute("renderer renderer_r4");
-        else if (strstr(Core.Params, "-r3"))
-            Console->Execute("renderer renderer_r3");
-        else if (strstr(Core.Params, "-r2.5"))
-            Console->Execute("renderer renderer_r2.5");
-        else if (strstr(Core.Params, "-r2a"))
-            Console->Execute("renderer renderer_r2a");
-        else if (strstr(Core.Params, "-r2"))
-            Console->Execute("renderer renderer_r2");
-        else if (strstr(Core.Params, "-r1"))
-            Console->Execute("renderer renderer_r1");
-        else
-        {
-            CCC_LoadCFG_custom cmd("renderer ");
-            cmd.Execute(Console->ConfigFile);
-        }
-    }
-    else
-        Console->Execute("renderer renderer_r1");
 
     Engine.External.Initialize();
     Startup();

@@ -1,19 +1,13 @@
 #include "stdafx.h"
+#include "xrEngine/TaskScheduler.hpp"
 #include "Include/xrRender/DrawUtils.h"
 #include "Render.h"
 #include "IGame_Persistent.h"
 #include "XR_IOConsole.h"
+#include "MonitorManager.hpp"
 #include "xr_input.h"
 #include "SDL.h"
 #include "SDL_syswm.h"
-
-extern void FreeMonitorsToken();
-extern void FreeVidModesToken();
-extern void FreeRefreshRateToken();
-
-extern void FreeMonitorsToken();
-extern void FreeVidModesToken();
-extern void FreeRefreshRateToken();
 
 void CRenderDevice::Destroy()
 {
@@ -28,9 +22,8 @@ void CRenderDevice::Destroy()
     GEnv.Render->OnDeviceDestroy(false);
     Memory.mem_compact();
     GEnv.Render->DestroyHW();
-    FreeRefreshRateToken();
-    FreeVidModesToken();
-    FreeMonitorsToken();
+    g_monitors.Destroy();
+    TaskScheduler->Destroy();
     seqRender.Clear();
     seqAppActivate.Clear();
     seqAppDeactivate.Clear();
@@ -43,7 +36,6 @@ void CRenderDevice::Destroy()
     xr_delete(Statistic);
 
     SDL_DestroyWindow(m_sdlWnd);
-    SDL_Quit();
 }
 
 #include "IGame_Level.h"
@@ -52,6 +44,8 @@ extern BOOL bNeed_re_create_env;
 
 void CRenderDevice::Reset(bool precache)
 {
+    TaskScheduler->RemoveTasksWithType(Task::Type::Renderer);
+
     const auto dwWidth_before = dwWidth;
     const auto dwHeight_before = dwHeight;
     pInput->GrabInput(false);

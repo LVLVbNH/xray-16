@@ -503,7 +503,7 @@ bool CScriptEngine::namespace_loaded(LPCSTR name, bool remove_from_stack)
     int start = lua_gettop(lua());
     lua_pushstring(lua(), GlobalNamespace);
     lua_rawget(lua(), LUA_GLOBALSINDEX);
-    string256 S2;
+    string256 S2 = { 0 };
     xr_strcpy(S2, name);
     LPSTR S = S2;
     for (;;)
@@ -590,7 +590,7 @@ bool CScriptEngine::object(LPCSTR namespace_name, LPCSTR identifier, int type)
 
 luabind::object CScriptEngine::name_space(LPCSTR namespace_name)
 {
-    string256 S1;
+    string256 S1 = { 0 };
     xr_strcpy(S1, namespace_name);
     LPSTR S = S1;
     luabind::object lua_namespace = luabind::globals(lua());
@@ -866,12 +866,15 @@ void CScriptEngine::unload()
     *m_last_no_file = 0;
 }
 
-void CScriptEngine::onErrorCallback(lua_State* L, pcstr scriptName, int errorCode, pcstr err)
+bool CScriptEngine::onErrorCallback(lua_State* L, pcstr scriptName, int errorCode, pcstr err)
 {
     print_output(L, scriptName, errorCode, err);
     on_error(L);
 
-    xrDebug::Fatal(DEBUG_INFO, "LUA error: %s", err);
+    bool ignoreAlways;
+    const auto result = xrDebug::Fail(ignoreAlways, DEBUG_INFO, "LUA error", err);
+
+    return result == AssertionResult::ignore;
 }
 
 int CScriptEngine::lua_panic(lua_State* L)
@@ -891,10 +894,14 @@ int CScriptEngine::lua_pcall_failed(lua_State* L)
     const bool isString = lua_isstring(L, -1);
     const pcstr err = isString ? lua_tostring(L, -1) : "";
 
-    onErrorCallback(L, "", LUA_ERRRUN, err);
+    const bool result = onErrorCallback(L, "", LUA_ERRRUN, err);
 
     if (isString)
         lua_pop(L, 1);
+
+    if (result)
+        return LUA_OK;
+
     return LUA_ERRRUN;
 }
 #if 1 //!XRAY_EXCEPTIONS
@@ -983,8 +990,16 @@ void CScriptEngine::init(ExporterFunc exporterFunc, bool loadGlobalNamespace)
 #endif
     reinit();
     luabind::open(lua());
-    // XXX: temporary workaround to preserve backwards compatibility with game scripts
-    luabind::disable_super_deprecation();
+
+    // Workarounds to preserve backwards compatibility with game scripts
+    {
+        const bool nilConversion =
+            pSettingsOpenXRay->read_if_exists<bool>("lua_scripting", "allow_nil_conversion", false);
+     
+        luabind::allow_nil_conversion(nilConversion);
+        luabind::disable_super_deprecation();
+    }
+
     luabind::bind_class_info(lua());
     setup_callbacks();
     if (exporterFunc)
@@ -1141,7 +1156,7 @@ bool CScriptEngine::function_object(LPCSTR function_to_call, luabind::object& ob
 {
     if (!xr_strlen(function_to_call))
         return false;
-    string256 name_space, function;
+    string256 name_space = { 0 }, function = { 0 };
     parse_script_namespace(function_to_call, name_space, sizeof(name_space), function, sizeof(function));
     if (xr_strcmp(name_space, GlobalNamespace))
     {

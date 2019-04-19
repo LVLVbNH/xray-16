@@ -19,7 +19,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Include/xrRender
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../Externals/luabind
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../Externals/gli
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../sdk/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../Externals/gli/external/glm
     ${SDL_INCLUDE_DIRS}
     )
 
@@ -39,7 +39,7 @@ list(REMOVE_ITEM ${PROJECT_NAME}__INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/../xrRen
 list(REMOVE_ITEM ${PROJECT_NAME}__INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/../xrRender/xr_effgamma.h")
 list(REMOVE_ITEM ${PROJECT_NAME}__INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/../xrRender/r__pixel_calculator.h")
 
-add_definitions(-DXRLCUTIL_EXPORTS -D_USRDLL -DXRRENDER_GL_EXPORTS -DUSE_OGL -DNO_XR_VDECLARATOR)
+add_definitions(-DXRRENDER_GL_EXPORTS -DUSE_OGL -DNO_XR_VDECLARATOR)
 
 add_library(${PROJECT_NAME} SHARED ${${PROJECT_NAME}__SOURCES} ${${PROJECT_NAME}__INCLUDES})
 

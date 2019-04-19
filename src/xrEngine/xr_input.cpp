@@ -15,6 +15,10 @@ ENGINE_API float psMouseSens = 1.f;
 ENGINE_API float psMouseSensScale = 1.f;
 ENGINE_API Flags32 psMouseInvert = {FALSE};
 
+// Max events per frame
+constexpr size_t MAX_KEYBOARD_EVENTS = 64;
+constexpr size_t MAX_MOUSE_EVENTS = 256;
+
 float stop_vibration_time = flt_max;
 
 static void on_error_dialog(bool before)
@@ -36,8 +40,8 @@ CInput::CInput(const bool exclusive)
 
     MouseDelta = 25;
 
-    ZeroMemory(mouseState, sizeof(mouseState));
-    ZeroMemory(keyboardState, sizeof(keyboardState));
+    mouseState.reset();
+    keyboardState.reset();
     ZeroMemory(mouseTimeStamp, sizeof(mouseTimeStamp));
     ZeroMemory(offs, sizeof(offs));
 
@@ -46,7 +50,6 @@ CInput::CInput(const bool exclusive)
 
     xrDebug::SetDialogHandler(on_error_dialog);
 
-    SDL_SetHint(SDL_HINT_GRAB_KEYBOARD, "1");
     SDL_StopTextInput(); // sanity
 
     Device.seqAppActivate.Add(this);
@@ -73,23 +76,19 @@ void CInput::MouseUpdate()
 {
     SDL_PumpEvents();
 
-    bool mouse_prev[COUNT_MOUSE_BUTTONS];
-
-    mouse_prev[0] = mouseState[0];
-    mouse_prev[1] = mouseState[1];
-    mouse_prev[2] = mouseState[2];
-    mouse_prev[3] = mouseState[3];
-    mouse_prev[4] = mouseState[4];
-    mouse_prev[5] = mouseState[5];
-    mouse_prev[6] = mouseState[6];
-    mouse_prev[7] = mouseState[7];
+    const auto mousePrev = mouseState;
 
     bool mouseMoved = false;
     offs[0] = offs[1] = offs[2] = 0;
 
-    SDL_Event event;
-    while (SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_MOUSEMOTION, SDL_MOUSEWHEEL))
+    SDL_Event events[MAX_MOUSE_EVENTS];
+    const auto count = SDL_PeepEvents(events, MAX_MOUSE_EVENTS,
+        SDL_GETEVENT, SDL_MOUSEMOTION, SDL_MOUSEWHEEL);
+
+    for (int i = 0; i < count; ++i)
     {
+        const SDL_Event event = events[i];
+
         switch (event.type)
         {
         case SDL_MOUSEMOTION:
@@ -117,20 +116,9 @@ void CInput::MouseUpdate()
         }
     }
 
-    auto isButtonOnHold = [&](int i)
-    {
-        if (mouseState[i] && mouse_prev[i])
+    for (int i = 0; i < MOUSE_COUNT; ++i)
+        if (mouseState[i] && mousePrev[i])
             cbStack.back()->IR_OnMouseHold(i);
-    };
-
-    isButtonOnHold(0);
-    isButtonOnHold(1);
-    isButtonOnHold(2);
-    isButtonOnHold(3);
-    isButtonOnHold(4);
-    isButtonOnHold(5);
-    isButtonOnHold(6);
-    isButtonOnHold(7);
 
     if (mouseMoved)
     {
@@ -152,9 +140,14 @@ void CInput::KeyUpdate()
 {
     SDL_PumpEvents();
 
-    SDL_Event event;
-    while (SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_KEYDOWN, SDL_KEYUP))
+    SDL_Event events[MAX_KEYBOARD_EVENTS];
+    const auto count = SDL_PeepEvents(events, MAX_KEYBOARD_EVENTS,
+        SDL_GETEVENT, SDL_KEYDOWN, SDL_KEYUP);
+
+    for (int i = 0; i < count; ++i)
     {
+        const SDL_Event event = events[i];
+
         switch (event.type)
         {
         case SDL_KEYDOWN:
@@ -185,9 +178,6 @@ pcstr KeyToMouseButtonName(const int dik)
     case MOUSE_3: return "Center mouse";
     case MOUSE_4: return "Fourth mouse";
     case MOUSE_5: return "Fifth mouse";
-    case MOUSE_6: return "Sixth mouse";
-    case MOUSE_7: return "Seventh mouse";
-    case MOUSE_8: return "Eighth mouse";
     default: return "Unknown mouse";
     }
 }
@@ -219,7 +209,7 @@ bool CInput::iGetAsyncKeyState(int dik)
     if (dik < COUNT_KB_BUTTONS)
         return keyboardState[dik];
 
-    if (dik >= MOUSE_1 && dik <= MOUSE_8)
+    if (dik >= MOUSE_1 && dik < MOUSE_MAX)
     {
         const int mk = dik - MOUSE_1;
         return iGetAsyncBtnState(mk);
@@ -234,29 +224,21 @@ bool CInput::iGetAsyncBtnState(int btn)
     return mouseState[btn];
 }
 
-void CInput::ClipCursor(const bool clip)
-{
-    if (clip)
-    {
-        SDL_ShowCursor(SDL_TRUE);
-        SDL_SetRelativeMouseMode(SDL_TRUE);
-    }
-    else
-    {
-        SDL_ShowCursor(SDL_FALSE);
-        SDL_SetRelativeMouseMode(SDL_FALSE);
-    }
-}
-
 void CInput::GrabInput(const bool grab)
 {
-    ClipCursor(grab);
+    // Self descriptive
+    SDL_ShowCursor(grab ? SDL_FALSE : SDL_TRUE);
 
-    if (IsExclusiveMode())
-        SDL_SetWindowGrab(Device.m_sdlWnd, grab ? SDL_TRUE : SDL_FALSE);
+    // Clip cursor to the current window
+    // If SDL_HINT_GRAB_KEYBOARD is set then the keyboard will be grabbed too
+    SDL_SetWindowGrab(Device.m_sdlWnd, grab ? SDL_TRUE : SDL_FALSE);
 
+    // Grab the mouse
+    if (exclusiveInput)
+        SDL_SetRelativeMouseMode(grab ? SDL_TRUE : SDL_FALSE);
+
+    // We're done here.
     inputGrabbed = grab;
-
 }
 
 bool CInput::InputIsGrabbed() const
@@ -307,8 +289,8 @@ void CInput::OnAppActivate(void)
     if (CurrentIR())
         CurrentIR()->IR_OnActivate();
 
-    ZeroMemory(mouseState, sizeof(mouseState));
-    ZeroMemory(keyboardState, sizeof(keyboardState));
+    mouseState.reset();
+    keyboardState.reset();
     ZeroMemory(mouseTimeStamp, sizeof(mouseTimeStamp));
     ZeroMemory(offs, sizeof(offs));
 }
@@ -318,8 +300,8 @@ void CInput::OnAppDeactivate(void)
     if (CurrentIR())
         CurrentIR()->IR_OnDeactivate();
 
-    ZeroMemory(mouseState, sizeof(mouseState));
-    ZeroMemory(keyboardState, sizeof(keyboardState));
+    mouseState.reset();
+    keyboardState.reset();
     ZeroMemory(mouseTimeStamp, sizeof(mouseTimeStamp));
     ZeroMemory(offs, sizeof(offs));
 }
@@ -354,7 +336,13 @@ IInputReceiver* CInput::CurrentIR()
 void CInput::ExclusiveMode(const bool exclusive)
 {
     GrabInput(false);
+
+    // Original CInput was using DirectInput in exclusive mode
+    // In which keyboard was grabbed with the mouse.
+    // Uncomment it below, if you want.
+    //SDL_SetHint(SDL_HINT_GRAB_KEYBOARD, exclusive ? "1" : "0");
     exclusiveInput = exclusive;
+
     GrabInput(true);
 }
 

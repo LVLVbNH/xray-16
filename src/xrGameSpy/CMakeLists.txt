@@ -9,7 +9,6 @@ add_dir("${DIRS}")
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/..
     ${CMAKE_CURRENT_SOURCE_DIR}/../xrServerEntities
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../sdk/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Externals/cximage
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Externals/GameSpy/src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../Externals/luabind
@@ -22,7 +21,7 @@ include_directories(
 
 #list(REMOVE_ITEM ${PROJECT_NAME}__INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/./atlas_stalkercs_v1.h")
 
-add_definitions(-D_USRDLL -DXRGAMESPY_EXPORTS -DXRAY_DISABLE_GAMESPY_WARNINGS)
+add_definitions(-DXRGAMESPY_EXPORTS -DXRAY_DISABLE_GAMESPY_WARNINGS)
 add_library(${PROJECT_NAME} SHARED ${${PROJECT_NAME}__SOURCES} ${${PROJECT_NAME}__INCLUDES})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES COTIRE_CXX_PREFIX_HEADER_INIT "stdafx.h")

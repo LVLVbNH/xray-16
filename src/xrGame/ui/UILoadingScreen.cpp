@@ -18,7 +18,8 @@
 extern ENGINE_API int ps_rs_loading_stages;
 
 UILoadingScreen::UILoadingScreen()
-    : loadingLogo(nullptr), loadingProgress(nullptr),
+    : loadingProgressBackground(nullptr), loadingProgress(nullptr),
+      loadingProgressPercent(nullptr), loadingLogo(nullptr),
       loadingStage(nullptr), loadingHeader(nullptr),
       loadingTipNumber(nullptr), loadingTip(nullptr)
 {
@@ -38,24 +39,47 @@ void UILoadingScreen::Initialize()
             uiXml.Set(LoadingScreenXML);
     }
 
-    loadingProgressBackground = UIHelper::CreateStatic(uiXml, "loading_progress_background", this);
-    loadingProgress = UIHelper::CreateProgressBar(uiXml, "loading_progress", this);
-    CUIXmlInit::InitWindow(uiXml, "background", 0, this);
+    const auto loadProgressBar = [&]()
+    {
+        loadingProgressBackground = UIHelper::CreateStatic(uiXml, "loading_progress_background", this, false);
+        loadingProgress = UIHelper::CreateProgressBar(uiXml, "loading_progress", this);
+    };
+
+    const auto loadBackground = [&]
+    {
+        CUIXmlInit::InitWindow(uiXml, "background", 0, this);
+    };
+
+    const auto node = uiXml.NavigateToNodeWithAttribute("loading_progress", "under_background", "0");
+    if (node)
+    {
+        loadBackground();
+        loadProgressBar();
+    }
+    else
+    {
+        loadProgressBar();
+        loadBackground();
+    }
+
     loadingLogo = UIHelper::CreateStatic(uiXml, "loading_logo", this);
-    loadingProgressPercent = UIHelper::CreateStatic(uiXml, "loading_progress_percent", this);
-    loadingStage = UIHelper::CreateStatic(uiXml, "loading_stage", this);
-    loadingHeader = UIHelper::CreateStatic(uiXml, "loading_header", this);
-    loadingTipNumber = UIHelper::CreateStatic(uiXml, "loading_tip_number", this);
-    loadingTip = UIHelper::CreateStatic(uiXml, "loading_tip", this);
+    loadingProgressPercent = UIHelper::CreateStatic(uiXml, "loading_progress_percent", this, false);
+    loadingStage = UIHelper::CreateStatic(uiXml, "loading_stage", this, false);
+    loadingHeader = UIHelper::CreateStatic(uiXml, "loading_header", this, false);
+    loadingTipNumber = UIHelper::CreateStatic(uiXml, "loading_tip_number", this, false);
+    loadingTip = UIHelper::CreateStatic(uiXml, "loading_tip", this, false);
 }
 
 void UILoadingScreen::Update(const int stagesCompleted, const int stagesTotal)
 {
+    ScopeLock scope(&loadingLock);
+
     const float progress = float(stagesCompleted) / stagesTotal * loadingProgress->GetRange_max();
+
     if (loadingProgress->GetProgressPos() < progress)
         loadingProgress->SetProgressPos(progress);
 
-    if (ps_rs_loading_stages)
+    if (loadingProgressPercent)
     {
         char buf[5];
         xr_sprintf(buf, "%.0f%%", loadingProgress->GetProgressPos());
@@ -66,24 +90,71 @@ void UILoadingScreen::Update(const int stagesCompleted, const int stagesTotal)
     Draw();
 }
 
-void UILoadingScreen::ForceFinish()
+void UILoadingScreen::ForceDrop()
 {
-    loadingProgress->SetProgressPos(loadingProgress->GetRange_max());
+    ScopeLock scope(&loadingLock);
+
+    const float prev = loadingProgress->m_inertion;
+    const float maximal = loadingProgress->GetRange_max();
+
+    loadingProgress->m_inertion = 0.0f;
+    loadingProgress->SetProgressPos(loadingProgress->GetRange_min());
+
+    for (int i = 0; i < int(maximal); ++i)
+    {
+        loadingProgress->Update();
+    }
+
+    loadingProgress->m_inertion = prev;
 }
 
-void UILoadingScreen::SetLevelLogo(const char* name) const
+void UILoadingScreen::ForceFinish()
 {
+    ScopeLock scope(&loadingLock);
+
+    const float prev = loadingProgress->m_inertion;
+    const float maximal = loadingProgress->GetRange_max();
+
+    loadingProgress->m_inertion = 0.0f;
+    loadingProgress->SetProgressPos(maximal);
+    
+    for (int i = 0; i < int(maximal); ++i)
+    {
+        loadingProgress->Update();
+    }
+
+    loadingProgress->m_inertion = prev;
+}
+
+void UILoadingScreen::SetLevelLogo(const char* name)
+{
+    ScopeLock scope(&loadingLock);
+
     loadingLogo->InitTexture(name);
 }
 
-void UILoadingScreen::SetStageTitle(const char* title) const
+void UILoadingScreen::SetStageTitle(const char* title)
 {
+    ScopeLock scope(&loadingLock);
+
     loadingStage->TextItemControl()->SetText(title);
 }
 
-void UILoadingScreen::SetStageTip(const char* header, const char* tipNumber, const char* tip) const
+void UILoadingScreen::SetStageTip(const char* header, const char* tipNumber, const char* tip)
 {
+    ScopeLock scope(&loadingLock);
+
     loadingHeader->TextItemControl()->SetText(header);
     loadingTipNumber->TextItemControl()->SetText(tipNumber);
     loadingTip->TextItemControl()->SetText(tip);
+}
+
+void UILoadingScreen::Show(bool status)
+{
+    CUIWindow::Show(status);
+}
+
+bool UILoadingScreen::IsShown()
+{
+    return CUIWindow::IsShown();
 }

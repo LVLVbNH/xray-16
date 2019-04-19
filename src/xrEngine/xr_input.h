@@ -1,19 +1,62 @@
 #pragma once
 
 #include "SDL.h"
+#include <bitset>
 
-// SDL_NUM_SCANCODES - max vavue in SDL_SCANCODE_* enum
-#define MOUSE_1 (SDL_NUM_SCANCODES + SDL_BUTTON_LEFT)
-#define MOUSE_2 (SDL_NUM_SCANCODES + SDL_BUTTON_RIGHT)
-#define MOUSE_3 (SDL_NUM_SCANCODES + SDL_BUTTON_MIDDLE)
+// Mouse2 is a middle button in SDL,
+// but in X-Ray this is a right button
+enum xrMouse
+{
+    MOUSE_1 = SDL_NUM_SCANCODES + SDL_BUTTON_LEFT,
+    MOUSE_2 = SDL_NUM_SCANCODES + SDL_BUTTON_RIGHT,
+    MOUSE_3 = SDL_NUM_SCANCODES + SDL_BUTTON_MIDDLE,
+    MOUSE_4 = SDL_NUM_SCANCODES + SDL_BUTTON_X1,
+    MOUSE_5 = SDL_NUM_SCANCODES + SDL_BUTTON_X2,
+    MOUSE_MAX,
+    MOUSE_COUNT = MOUSE_5 - SDL_NUM_SCANCODES
+};
 
-#define MOUSE_4 (SDL_NUM_SCANCODES + SDL_BUTTON_X1)
-#define MOUSE_5 (SDL_NUM_SCANCODES + SDL_BUTTON_X2)
-#define MOUSE_6 (SDL_NUM_SCANCODES + 6)
-#define MOUSE_7 (SDL_NUM_SCANCODES + 7)
-#define MOUSE_8 (SDL_NUM_SCANCODES + 8)
+enum xrController
+{
+    XR_CONTROLLER_BUTTON_INVALID = -1,
+    XR_CONTROLLER_BUTTON_A = SDL_CONTROLLER_BUTTON_A + MOUSE_MAX,
+    XR_CONTROLLER_BUTTON_B,
+    XR_CONTROLLER_BUTTON_X,
+    XR_CONTROLLER_BUTTON_Y,
+    XR_CONTROLLER_BUTTON_BACK,
+    XR_CONTROLLER_BUTTON_GUIDE,
+    XR_CONTROLLER_BUTTON_START,
+    XR_CONTROLLER_BUTTON_LEFTSTICK,
+    XR_CONTROLLER_BUTTON_RIGHTSTICK,
+    XR_CONTROLLER_BUTTON_LEFTSHOULDER,
+    XR_CONTROLLER_BUTTON_RIGHTSHOULDER,
+    XR_CONTROLLER_BUTTON_DPAD_UP,
+    XR_CONTROLLER_BUTTON_DPAD_DOWN,
+    XR_CONTROLLER_BUTTON_DPAD_LEFT,
+    XR_CONTROLLER_BUTTON_DPAD_RIGHT,
+    XR_CONTROLLER_BUTTON_MAX
+};
 
-constexpr int MouseButtonToKey[] = { MOUSE_1, MOUSE_3, MOUSE_2, MOUSE_4, MOUSE_5, MOUSE_6, MOUSE_7, MOUSE_8 };
+constexpr int MouseButtonToKey[] = { MOUSE_1, MOUSE_3, MOUSE_2, MOUSE_4, MOUSE_5 };
+
+constexpr int ControllerButtonToKey[] =
+{
+    XR_CONTROLLER_BUTTON_A,
+    XR_CONTROLLER_BUTTON_B,
+    XR_CONTROLLER_BUTTON_X,
+    XR_CONTROLLER_BUTTON_Y,
+    XR_CONTROLLER_BUTTON_BACK,
+    XR_CONTROLLER_BUTTON_GUIDE,
+    XR_CONTROLLER_BUTTON_START,
+    XR_CONTROLLER_BUTTON_LEFTSTICK,
+    XR_CONTROLLER_BUTTON_RIGHTSTICK,
+    XR_CONTROLLER_BUTTON_LEFTSHOULDER,
+    XR_CONTROLLER_BUTTON_RIGHTSHOULDER,
+    XR_CONTROLLER_BUTTON_DPAD_UP,
+    XR_CONTROLLER_BUTTON_DPAD_DOWN,
+    XR_CONTROLLER_BUTTON_DPAD_LEFT,
+    XR_CONTROLLER_BUTTON_DPAD_RIGHT
+};
 
 inline int KeyToMouseButton(const int dik, const bool fromZero = true)
 {
@@ -28,9 +71,6 @@ inline int KeyToMouseButton(const int dik, const bool fromZero = true)
     case MOUSE_3: return 2 + i;
     case MOUSE_4: return 3 + i;
     case MOUSE_5: return 4 + i;
-    case MOUSE_6: return 5 + i;
-    case MOUSE_7: return 6 + i;
-    case MOUSE_8: return 7 + i;
     default: return dik - SDL_NUM_SCANCODES + i;
     }
 }
@@ -45,8 +85,13 @@ class ENGINE_API CInput
 public:
     enum
     {
-        COUNT_MOUSE_BUTTONS = 8,
         COUNT_MOUSE_AXIS = 4,
+        COUNT_CONTROLLER_AXIS = 4
+    };
+
+    enum
+    {
+        COUNT_MOUSE_BUTTONS = MOUSE_COUNT,
         COUNT_KB_BUTTONS = SDL_NUM_SCANCODES
     };
 
@@ -65,8 +110,8 @@ private:
 
     int offs[COUNT_MOUSE_AXIS];
 
-    bool mouseState[COUNT_MOUSE_BUTTONS];
-    bool keyboardState[COUNT_KB_BUTTONS];
+    std::bitset<COUNT_MOUSE_BUTTONS> mouseState;
+    std::bitset<COUNT_KB_BUTTONS> keyboardState;
 
     xr_vector<IInputReceiver*> cbStack;
 
@@ -89,7 +134,6 @@ public:
     bool iGetAsyncKeyState(int dik);
     bool iGetAsyncBtnState(int btn);
     void iGetLastMouseDelta(Ivector2& p) { p.set(offs[0], offs[1]); }
-    void ClipCursor(const bool clip);
     void GrabInput(const bool grab);
     bool InputIsGrabbed() const;
 

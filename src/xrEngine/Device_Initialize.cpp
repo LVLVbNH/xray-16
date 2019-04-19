@@ -40,18 +40,27 @@ void CRenderDevice::Initialize()
     TimerGlobal.Start();
     TimerMM.Start();
 
-    R_ASSERT3(SDL_Init(SDL_INIT_VIDEO) == 0, "Unable to initialize SDL", SDL_GetError());
-
     if (strstr(Core.Params, "-weather"))
         initialize_weather_editor();
 
     if (!m_sdlWnd)
     {
-        const Uint32 flags = SDL_WINDOW_BORDERLESS | SDL_WINDOW_HIDDEN |
-            SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL;
+        Uint32 flags = SDL_WINDOW_BORDERLESS | SDL_WINDOW_HIDDEN |
+            SDL_WINDOW_RESIZABLE;
+
+        if (psDeviceFlags.test(rsRGL))
+        {
+            flags |= SDL_WINDOW_OPENGL;
+
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+            SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+            SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+            SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+        }
 
         m_sdlWnd = SDL_CreateWindow("S.T.A.L.K.E.R.: Call of Pripyat", 0, 0, 640, 480, flags);
-
         R_ASSERT3(m_sdlWnd, "Unable to create SDL window", SDL_GetError());
         SDL_SetWindowHitTest(m_sdlWnd, WindowHitTest, nullptr);
         SDL_SetWindowMinimumSize(m_sdlWnd, 256, 192);
@@ -70,7 +79,7 @@ void CRenderDevice::DumpStatistics(IGameFont& font, IPerformanceAlert* alert)
 
 SDL_HitTestResult WindowHitTest(SDL_Window* /*window*/, const SDL_Point* area, void* /*data*/)
 {
-    if (pInput->InputIsGrabbed())
+    if (!Device.AllowWindowDrag)
         return SDL_HITTEST_NORMAL;
 
     const auto& rect = Device.m_rcWindowClient;

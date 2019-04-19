@@ -33,13 +33,13 @@ void CRenderTarget::draw_rain(light& RainSetup)
     {
         // Fill vertex buffer
         FVF::TL* pv = (FVF::TL*)RCache.Vertex.Lock(4, g_combine->vb_stride, Offset);
-        pv->set(EPS, float(_h + EPS), d_Z, d_W, C, p0.x, p1.y);
+        pv->set(EPS, float(_h + EPS), d_Z, d_W, C, p0.x, p0.y);
         pv++;
-        pv->set(EPS, EPS, d_Z, d_W, C, p0.x, p0.y);
+        pv->set(EPS, EPS, d_Z, d_W, C, p0.x, p1.y);
         pv++;
-        pv->set(float(_w + EPS), float(_h + EPS), d_Z, d_W, C, p1.x, p1.y);
+        pv->set(float(_w + EPS), float(_h + EPS), d_Z, d_W, C, p1.x, p0.y);
         pv++;
-        pv->set(float(_w + EPS), EPS, d_Z, d_W, C, p1.x, p0.y);
+        pv->set(float(_w + EPS), EPS, d_Z, d_W, C, p1.x, p1.y);
         pv++;
         RCache.Vertex.Unlock(4, g_combine->vb_stride);
         RCache.set_Geometry(g_combine);
@@ -95,9 +95,9 @@ void CRenderTarget::draw_rain(light& RainSetup)
         Fmatrix m_TexelAdjust =
         {
             view_dimX / 2.f, 0.0f, 0.0f, 0.0f,
-            0.0f, -view_dimY / 2.f, 0.0f, 0.0f,
-            0.0f, 0.0f, fRange, 0.0f,
-            view_dimX / 2.f + view_sx + fTexelOffs, view_dimY / 2.f + view_sy + fTexelOffs, fBias, 1.0f
+            0.0f, view_dimY / 2.f, 0.0f, 0.0f,
+            0.0f, 0.0f, 0.5f * fRange, 0.0f,
+            view_dimX / 2.f + view_sx + fTexelOffs, view_dimY / 2.f + view_sy + fTexelOffs, 0.5f + fBias, 1.0f
         };
 
         // compute xforms
@@ -125,9 +125,9 @@ void CRenderTarget::draw_rain(light& RainSetup)
         Fmatrix			m_TexelAdjust		= 
         {
             0.5f,				0.0f,				0.0f,			0.0f,
-            0.0f,				-0.5f,				0.0f,			0.0f,
-            0.0f,				0.0f,				fRange,			0.0f,
-            0.5f,				0.5f,				fBias,			1.0f
+            0.0f,				0.5f,				0.0f,			0.0f,
+            0.0f,				0.0f,				0.5f * fRange,			0.0f,
+            0.5f,				0.5f,				0.5f + fBias,			1.0f
         };
 
         // compute xforms
@@ -177,13 +177,13 @@ void CRenderTarget::draw_rain(light& RainSetup)
 
         // Fill vertex buffer
         FVF::TL2uv* pv = (FVF::TL2uv*)RCache.Vertex.Lock(4, g_combine_2UV->vb_stride, Offset);
-        pv->set(-1, -1, d_Z, d_W, C, 0, 1, 0, scale_X);
+        pv->set(-1, -1, d_Z, d_W, C, 0, 0, 0, scale_X);
         pv++;
-        pv->set(-1, 1, d_Z, d_W, C, 0, 0, 0, 0);
+        pv->set(-1, 1, d_Z, d_W, C, 0, 1, 0, 0);
         pv++;
-        pv->set(1, -1, d_Z, d_W, C, 1, 1, scale_X, scale_X);
+        pv->set(1, -1, d_Z, d_W, C, 1, 0, scale_X, scale_X);
         pv++;
-        pv->set(1, 1, d_Z, d_W, C, 1, 0, scale_X, 0);
+        pv->set(1, 1, d_Z, d_W, C, 1, 1, scale_X, 0);
         pv++;
         RCache.Vertex.Unlock(4, g_combine_2UV->vb_stride);
         RCache.set_Geometry(g_combine_2UV);
@@ -255,6 +255,7 @@ void CRenderTarget::draw_rain(light& RainSetup)
         RCache.set_c("m_shadow", m_shadow);
         RCache.set_c("m_sunmask", m_clouds_shadow);
         RCache.set_c("RainDensity", fRainFactor, 0, 0, 0);
+        RCache.set_c("RainFallof", ps_r3_dyn_wet_surf_near, ps_r3_dyn_wet_surf_far, 0, 0);
         if (!RImplementation.o.dx10_msaa)
         {
             RCache.set_Stencil(TRUE, D3DCMP_EQUAL, 0x01, 0x01, 0);
@@ -276,6 +277,7 @@ void CRenderTarget::draw_rain(light& RainSetup)
                 RCache.set_c("m_shadow", m_shadow);
                 RCache.set_c("m_sunmask", m_clouds_shadow);
                 RCache.set_c("RainDensity", fRainFactor, 0, 0, 0);
+                RCache.set_c("RainFallof", ps_r3_dyn_wet_surf_near, ps_r3_dyn_wet_surf_far, 0, 0);
                 RCache.set_CullMode(CULL_NONE);
                 RCache.set_Stencil(TRUE, D3DCMP_EQUAL, 0x81, 0x81, 0);
                 RCache.Render(D3DPT_TRIANGLELIST, Offset, 0, 4, 0, 2);

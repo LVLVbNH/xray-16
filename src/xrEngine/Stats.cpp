@@ -13,6 +13,7 @@
 #include "xrCore/cdecl_cast.hpp"
 #include "xrPhysics/IPHWorld.h"
 #include "PerformanceAlert.hpp"
+#include "TaskScheduler.hpp"
 
 int g_ErrorLineCount = 15;
 Flags32 g_stats_flags = {0};
@@ -135,6 +136,8 @@ void CStats::Show()
             g_pGameLevel->DumpStatistics(font, alertPtr);
         Engine.Sheduler.DumpStatistics(font, alertPtr);
         Engine.Scheduler.DumpStatistics(font, alertPtr);
+        if (TaskScheduler)
+            TaskScheduler->DumpStatistics(font, alertPtr);
         g_pGamePersistent->DumpStatistics(font, alertPtr);
         DumpSpatialStatistics(font, alertPtr, *g_SpatialSpace, engineTotal);
         DumpSpatialStatistics(font, alertPtr, *g_SpatialSpacePhysic, engineTotal);
@@ -147,6 +150,7 @@ void CStats::Show()
         font.OutSkip();
         pInput->DumpStatistics(font, alertPtr);
         font.OutSkip();
+        font.OutNext("CPU: %u", CPU::GetCurrentCPU());
         font.OutNext("QPC: %u", CPU::qpc_counter);
         CPU::qpc_counter = 0;
     }

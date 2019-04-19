@@ -15,14 +15,32 @@
 //?
 #endif
 
-#elif defined(LINUX)
+#elif defined(LINUX) || defined(FREEBSD)
 #include <x86intrin.h> // __rdtsc
+#ifdef LINUX
 #include <fpu_control.h>
+#elif defined(FREEBSD)
+#include <sys/sysctl.h>
+#include <fenv.h>
+typedef unsigned int fpu_control_t __attribute__((__mode__(__HI__)));
+#define _FPU_GETCW(x) asm volatile ("fnstcw %0" : "=m" ((*&x)))
+#define _FPU_SETCW(x) asm volatile ("fldcw %0" : : "m" ((*&x)))
+#define _FPU_EXTENDED FP_PRC_FLD
+#define _FPU_DOUBLE 0x200
+#define _FPU_SINGLE 0x0
+#define _FPU_RC_NEAREST FP_PS
+#define _FPU_DEFAULT FP_PD
+#endif
 #include <pthread.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-#include <sys/prctl.h>
 #include <chrono>
+#include <fstream>
+#include <string>
+#include <stdint.h>
+#include <string.h>
+#include <pcre.h>
+#include <iostream>
 #endif
 #include <thread>
 #include "SDL.h"
@@ -42,7 +60,7 @@ XRCORE_API Fmatrix Fidentity;
 XRCORE_API Dmatrix Didentity;
 XRCORE_API CRandom Random;
 
-#if defined(LINUX)
+#if defined(LINUX) || defined(FREEBSD)
 DWORD timeGetTime()
 {
     return SDL_GetTicks();
@@ -66,7 +84,7 @@ XRCORE_API void m24()
     _controlfp(_PC_24, MCW_PC);
 #endif
     _controlfp(_RC_CHOP, MCW_RC);
-#elif defined(LINUX)
+#elif defined(LINUX) || defined(FREEBSD)
     fpu_control_t fpu_cw;
     _FPU_GETCW(fpu_cw);
     fpu_cw = (fpu_cw & ~_FPU_EXTENDED & ~_FPU_DOUBLE) | _FPU_SINGLE;
@@ -81,7 +99,7 @@ XRCORE_API void m24r()
     _controlfp(_PC_24, MCW_PC);
 #endif
     _controlfp(_RC_NEAR, MCW_RC);
-#elif defined(LINUX)
+#elif defined(LINUX) || defined(FREEBSD)
     fpu_control_t fpu_cw;
     _FPU_GETCW(fpu_cw);
     fpu_cw = (fpu_cw & ~_FPU_EXTENDED & ~_FPU_DOUBLE) | _FPU_SINGLE | _FPU_RC_NEAREST;
@@ -96,7 +114,7 @@ XRCORE_API void m53()
     _controlfp(_PC_53, MCW_PC);
 #endif
     _controlfp(_RC_CHOP, MCW_RC);
-#elif defined(LINUX)
+#elif defined(LINUX) || defined(FREEBSD)
     fpu_control_t fpu_cw;
     _FPU_GETCW(fpu_cw);
     fpu_cw = (fpu_cw & ~_FPU_EXTENDED & ~_FPU_SINGLE) | _FPU_DOUBLE;
@@ -111,7 +129,7 @@ XRCORE_API void m53r()
     _controlfp(_PC_53, MCW_PC);
 #endif
     _controlfp(_RC_NEAR, MCW_RC);
-#elif defined(LINUX)
+#elif defined(LINUX) || defined(FREEBSD)
     fpu_control_t fpu_cw;
     _FPU_GETCW(fpu_cw);
     fpu_cw = (fpu_cw & ~_FPU_EXTENDED & ~_FPU_SINGLE) | _FPU_DOUBLE | _FPU_RC_NEAREST;
@@ -126,7 +144,7 @@ XRCORE_API void m64()
     _controlfp(_PC_64, MCW_PC);
 #endif
     _controlfp(_RC_CHOP, MCW_RC);
-#elif defined(LINUX)
+#elif defined(LINUX) || defined(FREEBSD)
     fpu_control_t fpu_cw;
     _FPU_GETCW(fpu_cw);
     fpu_cw = (fpu_cw & ~_FPU_DOUBLE & ~_FPU_SINGLE) | _FPU_EXTENDED;
@@ -141,7 +159,7 @@ XRCORE_API void m64r()
     _controlfp(_PC_64, MCW_PC);
 #endif
     _controlfp(_RC_NEAR, MCW_RC);
-#elif defined(LINUX)
+#elif defined(LINUX) || defined(FREEBSD)
     fpu_control_t fpu_cw;
     _FPU_GETCW(fpu_cw);
     fpu_cw = (fpu_cw & ~_FPU_DOUBLE & ~_FPU_SINGLE) | _FPU_EXTENDED | _FPU_RC_NEAREST;
@@ -153,7 +171,7 @@ void initialize()
 {
 #if defined(WINDOWS)
     _clearfp();
-#elif defined(LINUX)
+#elif defined(LINUX) || defined(FREEBSD)
     fpu_control_t fpu_cw;
     fpu_cw = _FPU_DEFAULT;
     _FPU_SETCW(fpu_cw);
@@ -167,7 +185,7 @@ void initialize()
 
 #if defined(WINDOWS)
     ::Random.seed(u32(CPU::GetCLK() % (1i64 << 32i64)));
-#elif defined(LINUX)
+#elif defined(LINUX) || defined(FREEBSD)
     ::Random.seed(u32(CPU::GetCLK() % ((u64)0x1 << 32)));
 #endif
 }
@@ -192,9 +210,72 @@ XRCORE_API u64 GetCLK()
 {
     return __rdtsc();
 }
+
+XRCORE_API u32 GetCurrentCPU()
+{
+#if defined(WINDOWS)
+    return GetCurrentProcessorNumber();
+#elif defined(LINUX)
+    return static_cast<u32>(sched_getcpu());
+#else
+    return 0;
+#endif
+}
 } // namespace CPU
 
 bool g_initialize_cpu_called = false;
+
+#if defined(LINUX)
+u32 cpufreq()
+{
+    u32 cpuFreq = 0;
+
+    // CPU frequency is stored in /proc/cpuinfo in lines beginning with "cpu MHz"
+    pcstr pattern = "^cpu MHz\\s*:\\s*(\\d+)";
+    pcstr pcreErrorStr = nullptr;
+    int pcreErrorOffset = 0;
+
+    pcre* reCompiled = pcre_compile(pattern, PCRE_ANCHORED, &pcreErrorStr, &pcreErrorOffset, nullptr);
+    if(reCompiled == nullptr)
+    {
+        return 0;
+    }
+
+    std::ifstream ifs("/proc/cpuinfo");
+    if(ifs.is_open())
+    {
+        xr_string line;
+        int results[10];
+        while(ifs.good())
+        {
+            std::getline(ifs, line);
+            int rc = pcre_exec(reCompiled, 0, line.c_str(), line.length(), 0, 0, results, sizeof(results)/sizeof(results[0]));
+            if(rc < 0)
+                continue;
+            // Match found - extract frequency
+            pcstr matchStr = nullptr;
+            pcre_get_substring(line.c_str(), results, rc, 1, &matchStr);
+            R_ASSERT(matchStr);
+            cpuFreq = atol(matchStr);
+            pcre_free_substring(matchStr);
+            break;
+        }
+        ifs.close();
+    }
+
+    pcre_free(reCompiled);
+    return cpuFreq;
+}
+#elif defined(FREEBSD)
+u32 cpufreq()
+{
+    u32 cpuFreq = 0;
+    size_t cpuFreqSz = sizeof(cpuFreq);
+
+    sysctlbyname("dev.cpu.0.freq", &cpuFreq, &cpuFreqSz, nullptr, 0);
+    return cpuFreq;
+}
+#endif // #ifdef LINUX
 
 //------------------------------------------------------------------------------------
 void _initialize_cpu()
@@ -214,7 +295,7 @@ void _initialize_cpu()
     if (SDL_HasAVX2()) xr_strcat(features, ", AVX2");
 
     Msg("* CPU features: %s", features);
-    Msg("* CPU cores/threads: %d/%d", std::thread::hardware_concurrency(), SDL_GetCPUCount());
+    Msg("* CPU cores/threads: %d/%d", SDL_GetCPUCount(), std::thread::hardware_concurrency());
 
 #if defined(WINDOWS)
     SYSTEM_INFO sysInfo;
@@ -232,7 +313,7 @@ void _initialize_cpu()
             i, cpuInfo.CurrentMhz, cpuInfo.MaxMhz);
     }
 #else
-    Msg("* CPU current freq: %lu MHz", CPU::qpc_freq);
+    Msg("* CPU current freq: %u MHz", cpufreq());
 #endif
     Log("");
     Fidentity.identity(); // Identity matrix
@@ -323,7 +404,7 @@ void thread_name(const char* name)
     {
     }
 #else
-    prctl(PR_SET_NAME, name, 0, 0, 0);
+    pthread_setname_np(pthread_self(), name);
 #endif
 }
 #pragma pack(pop)
@@ -336,7 +417,7 @@ struct THREAD_STARTUP
 };
 #if defined(WINDOWS)
 void __cdecl thread_entry(void* _params)
-#elif defined(LINUX)
+#elif defined(LINUX) || defined(FREEBSD)
 void *__cdecl thread_entry(void* _params)
 #endif
 {
@@ -350,7 +431,7 @@ void *__cdecl thread_entry(void* _params)
 
     // call
     entry(arglist);
-#ifdef LINUX
+#if defined(LINUX) || defined(FREEBSD)
     return nullptr;
 #endif
 }
@@ -365,7 +446,7 @@ void thread_spawn(thread_t* entry, const char* name, unsigned stack, void* argli
     startup->args = arglist;
 #if defined(WINDOWS)
     _beginthread(thread_entry, stack, startup);
-#elif defined(LINUX)
+#elif defined(LINUX) || defined(FREEBSD)
     pthread_t handle = 0;
     pthread_attr_t attr;
     pthread_attr_init(&attr);

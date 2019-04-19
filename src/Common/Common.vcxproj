@@ -175,6 +175,7 @@
     <ClInclude Include="..\xrCommon\math_funcs_inline.h" />
     <ClInclude Include="..\xrCommon\misc_math_types.h" />
     <ClInclude Include="..\xrCommon\predicates.h" />
+    <ClInclude Include="..\xrCommon\xr_allocator.h" />
     <ClInclude Include="..\xrCommon\xr_array.h" />
     <ClInclude Include="..\xrCommon\xr_deque.h" />
     <ClInclude Include="..\xrCommon\xr_list.h" />
@@ -217,6 +218,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="CommonImportExport.inl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\OpenXRay.natvis" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

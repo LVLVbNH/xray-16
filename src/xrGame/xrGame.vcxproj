@@ -109,12 +109,12 @@
     </ClCompile>
     <Link>
       <DelayLoadDLLs>AnselSDK$(PlatformArchitecture).dll;</DelayLoadDLLs>
-      <AdditionalDependencies>AnselSDK$(PlatformArchitecture).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>AnselSDK$(PlatformArchitecture).lib;FreeImage.lib;FreeImagePlus.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CustomBuildStep>
       <Command>if not exist "$(OutDir)AnselSDK$(PlatformArchitecture).dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\AnselSDK$(PlatformArchitecture).dll" "$(OutDir)AnselSDK$(PlatformArchitecture).dll"</Command>
-      <Inputs>$(xrSdkDir)binaries\$(PlatformShortName)\AnselSDK$(PlatformArchitecture).dll</Inputs>
-      <Outputs>$(OutDir)AnselSDK$(PlatformArchitecture).dll</Outputs>
+      <Inputs>$(xrSdkDir)binaries\$(PlatformShortName)\AnselSDK$(PlatformArchitecture).dll;</Inputs>
+      <Outputs>$(OutDir)AnselSDK$(PlatformArchitecture).dll;</Outputs>
       <TreatOutputAsContent>true</TreatOutputAsContent>
     </CustomBuildStep>
   </ItemDefinitionGroup>
@@ -126,12 +126,12 @@
     </ClCompile>
     <Link>
       <DelayLoadDLLs>AnselSDK$(PlatformArchitecture).dll;</DelayLoadDLLs>
-      <AdditionalDependencies>AnselSDK$(PlatformArchitecture).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>AnselSDK$(PlatformArchitecture).lib;FreeImage.lib;FreeImagePlus.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CustomBuildStep>
       <Command>if not exist "$(OutDir)AnselSDK$(PlatformArchitecture).dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\AnselSDK$(PlatformArchitecture).dll" "$(OutDir)AnselSDK$(PlatformArchitecture).dll"</Command>
-      <Inputs>$(xrSdkDir)binaries\$(PlatformShortName)\AnselSDK$(PlatformArchitecture).dll</Inputs>
-      <Outputs>$(OutDir)AnselSDK$(PlatformArchitecture).dll</Outputs>
+      <Inputs>$(xrSdkDir)binaries\$(PlatformShortName)\AnselSDK$(PlatformArchitecture).dll;</Inputs>
+      <Outputs>$(OutDir)AnselSDK$(PlatformArchitecture).dll;</Outputs>
       <TreatOutputAsContent>true</TreatOutputAsContent>
     </CustomBuildStep>
   </ItemDefinitionGroup>
@@ -143,12 +143,12 @@
     </ClCompile>
     <Link>
       <DelayLoadDLLs>AnselSDK$(PlatformArchitecture).dll;</DelayLoadDLLs>
-      <AdditionalDependencies>AnselSDK$(PlatformArchitecture).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>AnselSDK$(PlatformArchitecture).lib;FreeImage.lib;FreeImagePlus.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CustomBuildStep>
       <Command>if not exist "$(OutDir)AnselSDK$(PlatformArchitecture).dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\AnselSDK$(PlatformArchitecture).dll" "$(OutDir)AnselSDK$(PlatformArchitecture).dll"</Command>
-      <Inputs>$(xrSdkDir)binaries\$(PlatformShortName)\AnselSDK$(PlatformArchitecture).dll</Inputs>
-      <Outputs>$(OutDir)AnselSDK$(PlatformArchitecture).dll</Outputs>
+      <Inputs>$(xrSdkDir)binaries\$(PlatformShortName)\AnselSDK$(PlatformArchitecture).dll;</Inputs>
+      <Outputs>$(OutDir)AnselSDK$(PlatformArchitecture).dll;</Outputs>
       <TreatOutputAsContent>true</TreatOutputAsContent>
     </CustomBuildStep>
   </ItemDefinitionGroup>
@@ -160,12 +160,12 @@
     </ClCompile>
     <Link>
       <DelayLoadDLLs>AnselSDK$(PlatformArchitecture).dll;</DelayLoadDLLs>
-      <AdditionalDependencies>AnselSDK$(PlatformArchitecture).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>AnselSDK$(PlatformArchitecture).lib;FreeImage.lib;FreeImagePlus.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CustomBuildStep>
       <Command>if not exist "$(OutDir)AnselSDK$(PlatformArchitecture).dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\AnselSDK$(PlatformArchitecture).dll" "$(OutDir)AnselSDK$(PlatformArchitecture).dll"</Command>
-      <Inputs>$(xrSdkDir)binaries\$(PlatformShortName)\AnselSDK$(PlatformArchitecture).dll</Inputs>
-      <Outputs>$(OutDir)AnselSDK$(PlatformArchitecture).dll</Outputs>
+      <Inputs>$(xrSdkDir)binaries\$(PlatformShortName)\AnselSDK$(PlatformArchitecture).dll;</Inputs>
+      <Outputs>$(OutDir)AnselSDK$(PlatformArchitecture).dll;</Outputs>
       <TreatOutputAsContent>true</TreatOutputAsContent>
     </CustomBuildStep>
   </ItemDefinitionGroup>
@@ -178,12 +178,12 @@
     </ClCompile>
     <Link>
       <DelayLoadDLLs>AnselSDK$(PlatformArchitecture).dll;</DelayLoadDLLs>
-      <AdditionalDependencies>AnselSDK$(PlatformArchitecture).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>AnselSDK$(PlatformArchitecture).lib;FreeImage.lib;FreeImagePlus.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CustomBuildStep>
       <Command>if not exist "$(OutDir)AnselSDK$(PlatformArchitecture).dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\AnselSDK$(PlatformArchitecture).dll" "$(OutDir)AnselSDK$(PlatformArchitecture).dll"</Command>
-      <Inputs>$(xrSdkDir)binaries\$(PlatformShortName)\AnselSDK$(PlatformArchitecture).dll</Inputs>
-      <Outputs>$(OutDir)AnselSDK$(PlatformArchitecture).dll</Outputs>
+      <Inputs>$(xrSdkDir)binaries\$(PlatformShortName)\AnselSDK$(PlatformArchitecture).dll;</Inputs>
+      <Outputs>$(OutDir)AnselSDK$(PlatformArchitecture).dll;</Outputs>
       <TreatOutputAsContent>true</TreatOutputAsContent>
     </CustomBuildStep>
   </ItemDefinitionGroup>
@@ -195,12 +195,12 @@
     </ClCompile>
     <Link>
       <DelayLoadDLLs>AnselSDK$(PlatformArchitecture).dll;</DelayLoadDLLs>
-      <AdditionalDependencies>AnselSDK$(PlatformArchitecture).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>AnselSDK$(PlatformArchitecture).lib;FreeImage.lib;FreeImagePlus.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CustomBuildStep>
       <Command>if not exist "$(OutDir)AnselSDK$(PlatformArchitecture).dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\AnselSDK$(PlatformArchitecture).dll" "$(OutDir)AnselSDK$(PlatformArchitecture).dll"</Command>
-      <Inputs>$(xrSdkDir)binaries\$(PlatformShortName)\AnselSDK$(PlatformArchitecture).dll</Inputs>
-      <Outputs>$(OutDir)AnselSDK$(PlatformArchitecture).dll</Outputs>
+      <Inputs>$(xrSdkDir)binaries\$(PlatformShortName)\AnselSDK$(PlatformArchitecture).dll;</Inputs>
+      <Outputs>$(OutDir)AnselSDK$(PlatformArchitecture).dll;</Outputs>
       <TreatOutputAsContent>true</TreatOutputAsContent>
     </CustomBuildStep>
   </ItemDefinitionGroup>
@@ -3660,9 +3660,6 @@
     <ProjectReference Include="$(xrExternals)LuaJIT-proj\LuaJIT.vcxproj">
       <Project>{632aeeb6-dc06-4e15-9551-b2b09a4b73c5}</Project>
     </ProjectReference>
-    <ProjectReference Include="$(xrExternals)pugixml_vs2017_static.vcxproj">
-      <Project>{07cf01c0-b887-499d-ad9c-799cb6a9fe64}</Project>
-    </ProjectReference>
     <ProjectReference Include="$(SolutionDir)utils\xrMiscMath\xrMiscMath.vcxproj">
       <Project>{7885cf3c-ee04-4c67-9467-1fbf9a36b037}</Project>
     </ProjectReference>
@@ -3693,6 +3690,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\OpenXRay.natvis" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
